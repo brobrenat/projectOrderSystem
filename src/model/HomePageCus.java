@@ -5,11 +5,8 @@ import java.util.ArrayList;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -22,8 +19,8 @@ public class HomePageCus {
 
 	private Stage primaryStage;
 	private Main mainInstance;
+	private String username;
 	Label labeltitle = new Label("SeRuput Teh");
-	Label labelname = new Label("Welcome, Username");
 	Label labeldesc = new Label("Select a prodcut to view");
 	MenuBar menuBar = new MenuBar();
 	Menu homeMenu = new Menu("Home");
@@ -38,6 +35,7 @@ public class HomePageCus {
 	private ArrayList<item> itemsList = new ArrayList<>();
 	ListView<String> listView = new ListView<>();
 	Spinner<Integer> quantity = new Spinner<>(1, 100, 1);
+	Label labelname = new Label();
 	VBox intro = new VBox(labelname, labeldesc);
 	HBox hbox = new HBox(listView, intro);
 	VBox tampilanjudul = new VBox(labeltitle, hbox);
@@ -51,8 +49,11 @@ public class HomePageCus {
 	HBox quantspin = new HBox(quantlabel, quantity, totalprice);
     private ArrayList<cart> cartItems = new ArrayList<>();
 
-	public HomePageCus(Stage primaryStage) {
+	public HomePageCus(Stage primaryStage, String username) {
 		this.primaryStage = primaryStage;
+		this.username = username;
+		labelname.setText("Welcome, "+ username);
+		labelname.setFont(Font.font("Arial", FontWeight.BOLD, 21));
 		initialize();
 		setbuttonevent();
 		loadListData();
@@ -64,7 +65,6 @@ public class HomePageCus {
 
 	private void initialize() {
 		labeltitle.setFont(Font.font("Arial", FontWeight.BOLD, 42));
-		labelname.setFont(Font.font("Arial", FontWeight.BOLD, 21));
 		listView.setMaxWidth(450);
 		homeMenu.getItems().add(homePageMenuItem);
 		cartMenu.getItems().add(myCartMenuItem);
@@ -88,9 +88,9 @@ public class HomePageCus {
 	}
 
 	private void loadListData() {
-		itemsList.add(new item("Product A", 10.99));
-		itemsList.add(new item("Product B", 15.49));
-		itemsList.add(new item("Product C", 20.0));
+		itemsList.add(new item("Product A", 10000.0));
+		itemsList.add(new item("Product B", 15000.0));
+		itemsList.add(new item("Product C", 20000.0));
 
 		ObservableList<String> items = FXCollections.observableArrayList();
 		for (item i : itemsList) {
@@ -119,16 +119,23 @@ public class HomePageCus {
 					itemDescriptionBox.getChildren().addAll(quantspin, addtocart);
 					hbox.getChildren().addAll(itemDescriptionBox);
 				}
+
 				eachprice.setText(String.valueOf(getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem())));
 				itemDescriptionTitle.setText(newValue);
 				itemDescriptionLabel.setText("Description for " + newValue);
 				itemDescriptionBox.setVisible(true);
+				double price = getItemPrice(itemsList, newValue);
+				double totalPrice = price * quantity.getValue();
+
+				totalprice.setText("Total : Rp. " + String.format("%.2f", totalPrice));
 
 			} else {
 				hbox.getChildren().remove(itemDescriptionBox);
 				hbox.getChildren().add(intro);
 			}
 		});
+		
+		
 
 		quantity.valueProperty().addListener((observable, oldValue, newValue) -> {
 			String selectedItem = listView.getSelectionModel().getSelectedItem();
@@ -140,12 +147,14 @@ public class HomePageCus {
 			totalprice.setText("Total : Rp. " + String.format("%.2f", totalPrice)); 
 		});
 		
-		homeMenu.setOnAction(event -> new HomePageCus(primaryStage));
+		homeMenu.setOnAction(event -> new HomePageCus(primaryStage, username));
 		logoutMenuItem.setOnAction(event -> new login(primaryStage, mainInstance));
-		myCartMenuItem.setOnAction(event -> new mycart(primaryStage, cartItems, listView));
+		myCartMenuItem.setOnAction(event -> new mycart(primaryStage, cartItems, listView,username));
 		addtocart.setOnAction(event ->  addToCart());
-		
+
 	}
+	
+	
 	private void addToCart() {
 	    String selectedItem = listView.getSelectionModel().getSelectedItem();
 	    int selectedQuantity = quantity.getValue();
@@ -166,18 +175,12 @@ public class HomePageCus {
 	            cart cartItem = new cart(selectedItem, price, "Description", selectedQuantity);
 	            cartItems.add(cartItem);
 	        }
-
-	        showPopup("Added to Cart");
-	    }
-	}
-
-
-	    private void showPopup(String message) {
 	        Alert alert = new Alert(Alert.AlertType.INFORMATION);
 	        alert.setTitle("Message");
 	        alert.setHeaderText(null);
-	        alert.setContentText(message);
-	        alert.showAndWait();
-	    }
+	        alert.setContentText("Item Added to Cart");
+	        alert.showAndWait();	    }
+	}
+
 
 }
