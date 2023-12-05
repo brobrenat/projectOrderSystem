@@ -1,7 +1,6 @@
 package model;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -20,7 +19,7 @@ public class mycart {
 
 	private Stage primaryStage;
 	private Main mainInstance;
-	Label labeltitle = new Label("User's Cart");
+	Label labeltitle = new Label();
 	Label labelname = new Label("No Item in Cart");
 	Label labeldesc = new Label("Considering adding one!");
 	MenuBar menuBar = new MenuBar();
@@ -34,7 +33,7 @@ public class mycart {
 	VBox layout = new VBox();
 	Scene mycart;
 	ArrayList<item> itemsList = new ArrayList<>();
-	Spinner<Integer> quantity = new Spinner<>(1, 100, 1);
+	Spinner<Integer> quantity = new Spinner<>(-100, 100, 1);
 	Label itemDescriptionTitle = new Label();
 	Label itemDescriptionLabel = new Label();
 	Label eachprice = new Label();
@@ -48,14 +47,19 @@ public class mycart {
 	ListView<String> cartListView = new ListView<>();
 	HBox hbox = new HBox(cartListView, intro);
 	VBox cartinfo = new VBox();
-	VBox itemDescriptionBox = new VBox(itemDescriptionTitle, itemDescriptionLabel, eachprice);
-	HBox quantspin = new HBox(quantlabel, quantity, totalprice);
+	HBox quantspin = new HBox();
 	HBox updateremove = new HBox();
-	Label subtotal, orderinfo, username, phonenum, address;
+	VBox itemDescriptionBox = new VBox(itemDescriptionTitle, itemDescriptionLabel, eachprice, quantspin, updateremove);
+	Label subtotal, orderinfo, phonenum, address;
+	private String username;
+	ArrayList<transaction> transactions = new ArrayList<>();
 
-	public mycart(Stage primaryStage, ArrayList<cart> cartItems, ListView<String> cartListView) {
+	public mycart(Stage primaryStage, ArrayList<cart> cartItems, ListView<String> cartListView,String username) {
 		this.primaryStage = primaryStage;
 		this.cartItems = cartItems;
+		this.username = username;
+		labeltitle.setText(username+"'s"+" Cart");
+		
 		System.out.println("Number of items in cartItems: " + cartItems.size());
 		initialize();
 		setbuttonevent();
@@ -66,6 +70,7 @@ public class mycart {
 	}
 
 	private void initialize() {
+		checkEmptyCart();
 		labeltitle.setPadding(new Insets(10));
 		labeltitle.setFont(Font.font("Arial", FontWeight.BOLD, 42));
 		labelname.setFont(Font.font("Arial", FontWeight.BOLD, 21));
@@ -82,16 +87,17 @@ public class mycart {
 		itemDescriptionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
 		totalprice.setFont(Font.font("Arial", FontWeight.NORMAL, 24));
 		quantspin.setSpacing(5);
+		updateremove.setSpacing(5);
 		updatecart.setMaxWidth(150);
 		removecart.setMaxWidth(150);
-		subtotal = new Label("Total : ");
+		subtotal = new Label("Total : Rp. 0.00");
 		orderinfo = new Label("Order Information");
 		orderinfo.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-		username = new Label("Username : ");
+		Label usernamesh = new Label("Username : ");
 		phonenum = new Label("Phone Number : ");
 		address = new Label("Address : ");
 		purchase.setMaxWidth(150);
-		VBox cartinfo = new VBox(subtotal, orderinfo, username, phonenum, address, purchase);
+		VBox cartinfo = new VBox(subtotal, orderinfo, usernamesh, phonenum, address, purchase);
 		VBox tampilanjudul = new VBox(labeltitle, hbox, cartinfo);
 		cartinfo.setPadding(new Insets(10));
 		cartinfo.setSpacing(5);
@@ -101,13 +107,15 @@ public class mycart {
 		hbox.setSpacing(15);
 		hbox.setPadding(new Insets(15));
 		mycart = new Scene(mainVB, 1000, 800);
-		checkEmptyCart();
+		updateSubtotalLabel();
 
 	}
 
 	private void checkEmptyCart() {
-		if (cartItems.isEmpty()) {
-			intro.setVisible(true);
+		if (calculateTotalPrice() == 0) {
+			labelname.setText("No Item in Cart");
+			labeldesc.setText("Considering adding one!");
+
 		} else {
 			labelname.setText("Welcome User's");
 			labeldesc.setText("Choose item to add or delete");
@@ -126,9 +134,10 @@ public class mycart {
 		cartListView.getItems().addAll(cartItemNames);
 	}
 
-	private double getItemPrice(ArrayList<item> items, String itemName) {
-		for (item i : items) {
-			if (i.getObjectname().equals(itemName)) {
+	private double getItemPrice(ArrayList<item> items, String itemname) {
+
+		for (cart i : cartItems) {
+			if (i.getObjectname().equalsIgnoreCase(itemname)) {
 				return i.getObjectprice();
 			}
 		}
@@ -141,41 +150,203 @@ public class mycart {
 		if (startIndex >= 0 && endIndex >= 0) {
 			return newValue.substring(startIndex, endIndex).trim();
 		}
-		return ""; 
+		return "";
 	}
 
 	private void setbuttonevent() {
 		cartListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+			itemDescriptionBox.setVisible(true);
 			if (newValue != null) {
-	            String productName = extractProductName(newValue);
+				String productName = extractProductName(newValue);
 				if (!hbox.getChildren().contains(itemDescriptionBox)) {
 					hbox.getChildren().remove(intro);
 					hbox.getChildren().addAll(itemDescriptionBox);
-					HBox updateremove = new HBox(updatecart, removecart);
-					updateremove.setSpacing(5);
-					itemDescriptionBox.getChildren().addAll(quantspin, updateremove);
-					System.out.println(newValue);
-					System.out.println(observable);
-					System.out.println(oldValue);
+					updateremove.getChildren().clear();
+					updateremove.getChildren().addAll(updatecart, removecart);
+					quantspin.getChildren().clear();
+					quantspin.getChildren().addAll(quantlabel, quantity, totalprice);
+
 				}
-				eachprice.setText(
-						String.valueOf(getItemPrice(itemsList, cartListView.getSelectionModel().getSelectedItem())));
+				eachprice.setText(String.valueOf(getItemPrice(itemsList, productName)));
 				itemDescriptionTitle.setText(productName);
 				itemDescriptionLabel.setText("Description for " + productName);
 				itemDescriptionBox.setVisible(true);
+				String selectedItem = extractProductName(newValue);
+				double price = getItemPrice(itemsList, selectedItem);
+				double totalPrice = price * quantity.getValue();
+
+				totalprice.setText("Total : Rp. " + String.format("%.2f", totalPrice));
 			} else {
 				hbox.getChildren().remove(itemDescriptionBox);
 				hbox.getChildren().add(intro);
 			}
 		});
 
-		homeMenu.setOnAction(event -> new HomePageCus(primaryStage));
+		quantity.valueProperty().addListener((observable, oldValue, newValue) -> {
+			String selectedItem = extractProductName(cartListView.getSelectionModel().getSelectedItem());
+			double price = getItemPrice(itemsList, selectedItem);
+			double totalPrice = price * newValue.intValue();
+
+			totalprice.setText("Total : Rp. " + String.format("%.2f", totalPrice));
+		});
+
+		updatecart.setOnAction(event -> {
+			String selectedItem = extractProductName(cartListView.getSelectionModel().getSelectedItem());
+			int cartQuantity = getCartQuantity(selectedItem);
+			int spinnerValue = quantity.getValue();
+
+			if (spinnerValue < 0) {
+				int newQuantity = cartQuantity + spinnerValue;
+				if (newQuantity >= 0) {
+					updateCartQuantity(selectedItem, newQuantity);
+					updateListView(selectedItem, newQuantity);
+				} else {
+					Alert alert = new Alert(Alert.AlertType.ERROR);
+			        alert.setTitle("Error");
+			        alert.setHeaderText(null);
+			        alert.setContentText("Quantity is not valid!");
+			        alert.showAndWait();
+				}
+			} else if (spinnerValue == 0) {
+				removeItemFromCart(selectedItem);
+			} else if (spinnerValue > 0) {
+				updateCartQuantity(selectedItem, spinnerValue);
+				updateListView(selectedItem, spinnerValue);
+			}
+			updateSubtotalLabel();
+			itemDescriptionBox.setVisible(false);
+			labelname.setVisible(false);
+			labeldesc.setVisible(false);
+		});
+
+		removecart.setOnAction(event -> {
+			String selectedItem = cartListView.getSelectionModel().getSelectedItem();
+			String productName = extractProductName(selectedItem);
+			removeItemFromCart(productName);
+			updateSubtotalLabel();
+			Alert alert = new Alert(Alert.AlertType.INFORMATION);
+	        alert.setTitle("Message");
+	        alert.setHeaderText(null);
+	        alert.setContentText("Deleted from Cart");
+	        alert.showAndWait();
+	        labelname.setVisible(true);
+			labeldesc.setVisible(true);
+		});
+
+		purchase.setOnAction(event -> {
+		    Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+		    confirmation.setTitle("Confirmation");
+		    confirmation.setHeaderText("Confirm Purchase");
+		    confirmation.setContentText("Are you sure you want to make this purchase?");
+		    ButtonType buttonYes = new ButtonType("Yes", ButtonBar.ButtonData.OK_DONE);
+		    ButtonType buttonNo = new ButtonType("No", ButtonBar.ButtonData.CANCEL_CLOSE);
+		    confirmation.getButtonTypes().setAll(buttonYes, buttonNo);
+			confirmation.showAndWait().ifPresent(response -> {
+				if (response == ButtonType.OK) {
+					String transactionId = generateTransactionId(transactions.size() + 1);
+					transaction newTransaction = new transaction(transactionId, new ArrayList<>(cartItems));
+					transactions.add(newTransaction);
+					Alert alert = new Alert(Alert.AlertType.INFORMATION);
+			        alert.setTitle("Message");
+			        alert.setHeaderText(null);
+			        alert.setContentText("Successfully Purchased");
+			        alert.showAndWait();
+			        cartItems.clear();
+					cartListView.getItems().clear();
+					updateSubtotalLabel();
+					checkEmptyCart();
+				}else {
+					Alert alert = new Alert(Alert.AlertType.ERROR);
+			        alert.setTitle("Error");
+			        alert.setHeaderText(null);
+			        alert.setContentText("Failed to Make Transaction");
+			        alert.showAndWait();
+				}
+			});
+			
+			
+		});
+		homeMenu.setOnAction(event -> new HomePageCus(primaryStage,username));
 		logoutMenuItem.setOnAction(event -> new login(primaryStage, mainInstance));
+		purchaseHistoryMenuItem.setOnAction(event -> new purchasehistory(primaryStage, cartItems, cartListView, username));
+
 	}
 
-	public void removeItemFromCart(cart itemToRemove) {
-		cartItems.remove(itemToRemove);
-		loadListView();
+	private int getCartQuantity(String productName) {
+		int cartQuantity = 0;
+		for (cart item : cartItems) {
+			if (item.getObjectname().equalsIgnoreCase(productName)) {
+				cartQuantity = item.getObjectquantity();
+				break;
+			}
+		}
+		return cartQuantity;
+	}
+
+	private void updateCartQuantity(String productName, int newQuantity) {
+		for (cart item : cartItems) {
+			if (item.getObjectname().equalsIgnoreCase(productName)) {
+				item.setObjectquantity(newQuantity);
+				break;
+			}
+		}
+	}
+
+	private double calculateTotalPrice() {
+		double totalPrice = 0.0;
+
+		for (cart cartItem : cartItems) {
+			totalPrice += cartItem.getObjectprice() * cartItem.getObjectquantity();
+		}
+		return totalPrice;
+
+	}
+
+	private void updateSubtotalLabel() {
+		if (subtotal != null) {
+			double total = calculateTotalPrice();
+			subtotal.setText("Total : Rp. " + String.format("%.2f", total));
+		}
+	}
+
+	private void updateListView(String productName, int newQuantity) {
+		ObservableList<String> items = cartListView.getItems();
+		for (int i = 0; i < items.size(); i++) {
+			String currentItem = items.get(i);
+			if (currentItem.contains(productName)) {
+				items.remove(i);
+				items.add(i, newQuantity + "x " + productName + " ( Rp."
+						+ (getItemPrice(itemsList, productName) * newQuantity) + ")");
+				break;
+			}
+		}
+	}
+
+	private void removeItemFromCart(String productName) {
+		for (cart item : cartItems) {
+			if (item.getObjectname().equalsIgnoreCase(productName)) {
+				cartItems.remove(item);
+				break;
+			}
+		}
+
+		ObservableList<String> items = cartListView.getItems();
+		for (String item : new ArrayList<>(items)) {
+			if (item.contains(productName)) {
+				items.remove(item);
+				break;
+			}
+		}
+		updateSubtotalLabel();
+
+		if (calculateTotalPrice() == 0) {
+			labelname.setText("No Item in Cart");
+			labeldesc.setText("Considering adding one!");
+		}
+	}
+
+	private String generateTransactionId(int index) {
+		return "TR" + String.format("%03d", index);
 	}
 
 }
