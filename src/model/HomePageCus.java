@@ -12,8 +12,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import main.Main;
+import main.databaseConnection;
 
 public class HomePageCus {
 
@@ -40,7 +42,7 @@ public class HomePageCus {
 	HBox hbox = new HBox(listView, intro);
 	VBox tampilanjudul = new VBox(labeltitle, hbox);
 	Label itemDescriptionTitle = new Label();
-	Label itemDescriptionLabel = new Label();
+	Text itemDescriptionLabel = new Text();
 	Label eachprice = new Label();
 	Label quantlabel = new Label("Quantity : ");
 	Label totalprice = new Label();
@@ -48,10 +50,14 @@ public class HomePageCus {
 	VBox itemDescriptionBox = new VBox(itemDescriptionTitle, itemDescriptionLabel, eachprice);
 	HBox quantspin = new HBox(quantlabel, quantity, totalprice);
     private ArrayList<cart> cartItems = new ArrayList<>();
+	databaseConnection dbcon;
 
-	public HomePageCus(Stage primaryStage, String username) {
+
+
+	public HomePageCus(Stage primaryStage) {
 		this.primaryStage = primaryStage;
-		this.username = username;
+		this.dbcon = databaseConnection.getConnection();
+        this.username = username;
 		labelname.setText("Welcome, "+ username);
 		labelname.setFont(Font.font("Arial", FontWeight.BOLD, 21));
 		initialize();
@@ -88,18 +94,23 @@ public class HomePageCus {
 	}
 
 	private void loadListData() {
-		itemsList.add(new item("Product A", 10000.0));
-		itemsList.add(new item("Product B", 15000.0));
-		itemsList.add(new item("Product C", 20000.0));
+	    if (dbcon != null) {
+	        // Assuming you have a method in your databaseConnection class to retrieve item data
+	        ArrayList<item> itemsFromDatabase = dbcon.getAllItems();
 
-		ObservableList<String> items = FXCollections.observableArrayList();
-		for (item i : itemsList) {
-			items.add(i.getObjectname());
-		}
+	        itemsList.clear(); // Clear the existing list before adding items from the database
+	        itemsList.addAll(itemsFromDatabase);
 
-	    listView.getItems().clear();
-	    listView.setItems(items);
+	        ObservableList<String> items = FXCollections.observableArrayList();
+	        for (item i : itemsList) {
+	            items.add(i.getObjectname());
+	        }
 
+	        listView.getItems().clear();
+	        listView.setItems(items);
+	    } else {
+	        System.err.println("Error: The 'dbcon' object is not initialized.");
+	    }
 	}
 
 	private double getItemPrice(ArrayList<item> items, String itemName) {
@@ -112,6 +123,8 @@ public class HomePageCus {
 	}
 
 	private void setbuttonevent() {
+		itemDescriptionLabel.setWrappingWidth(300);
+		
 		listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue != null) {
 				if (!hbox.getChildren().contains(itemDescriptionBox)) {
@@ -122,8 +135,8 @@ public class HomePageCus {
 
 				eachprice.setText(String.valueOf(getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem())));
 				itemDescriptionTitle.setText(newValue);
-				itemDescriptionLabel.setText("Description for " + newValue);
-				itemDescriptionBox.setVisible(true);
+				String productDescription = dbcon.getProductDescription(newValue);
+		        itemDescriptionLabel.setText(productDescription);				itemDescriptionBox.setVisible(true);
 				double price = getItemPrice(itemsList, newValue);
 				double totalPrice = price * quantity.getValue();
 
@@ -147,9 +160,9 @@ public class HomePageCus {
 			totalprice.setText("Total : Rp. " + String.format("%.2f", totalPrice)); 
 		});
 		
-		homeMenu.setOnAction(event -> new HomePageCus(primaryStage, username));
-		logoutMenuItem.setOnAction(event -> new login(primaryStage, mainInstance));
-		myCartMenuItem.setOnAction(event -> new mycart(primaryStage, cartItems, listView,username));
+		homeMenu.setOnAction(event -> new HomePageCus(primaryStage));
+		logoutMenuItem.setOnAction(event -> new login(primaryStage));
+		//myCartMenuItem.setOnAction(event -> new mycart(primaryStage, cartItems, listView,username));
 		addtocart.setOnAction(event ->  addToCart());
 
 	}
