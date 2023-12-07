@@ -12,8 +12,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import main.Main;
+import main.databaseConnection;
 
 public class HomePageAdmin {
 	
@@ -38,14 +40,15 @@ public class HomePageAdmin {
 	HBox hbox = new HBox(listView, intro);
 	VBox tampilanjudul = new VBox(labeltitle, hbox);
 	Label itemDescriptionTitle = new Label();
-	Label itemDescriptionLabel = new Label();
+	Text itemDescriptionLabel = new Text();
 	Label eachprice = new Label();
 	VBox itemDescriptionBox = new VBox(itemDescriptionTitle, itemDescriptionLabel, eachprice);
-
+	databaseConnection dbcon;
  
    
 	public HomePageAdmin(Stage primaryStage, String username) {
 		this.primaryStage = primaryStage;
+		this.dbcon = databaseConnection.getConnection();
 		this.username = username;
 		labelname.setText("Welcome, "+ username);
 		labelname.setFont(Font.font("Arial", FontWeight.BOLD, 21));
@@ -58,6 +61,8 @@ public class HomePageAdmin {
 	}
 
 	private void setButtonEvent() {
+		itemDescriptionLabel.setWrappingWidth(300);
+
 	    listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 	        if (newValue != null) {
 	            if (!hbox.getChildren().contains(itemDescriptionBox)) {
@@ -67,16 +72,25 @@ public class HomePageAdmin {
 
 	            eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
 	            itemDescriptionTitle.setText(newValue);
-	            itemDescriptionLabel.setText("Description for " + newValue);
+	            String productDescription = dbcon.getProductDescription(newValue);
+	            itemDescriptionLabel.setText(productDescription);
 	            itemDescriptionBox.setVisible(true);
 	        } else {
 	            hbox.getChildren().remove(itemDescriptionBox);
 	            hbox.getChildren().add(intro);
 	        }
 	    });
+	    
+	    
 
-	    homeMenu.setOnAction(event -> new HomePageAdmin(primaryStage, username));
-	    logoutMenuItem.setOnAction(event -> new login(primaryStage, mainInstance));
+
+//	    homeMenu.setOnAction(event -> new HomePageAdmin(primaryStage, username));
+	    homeMenu.setOnAction(event -> {
+            // No need to create a new instance, just switch the scene
+            new HomePageAdmin(primaryStage, username);
+        });
+	    
+	    logoutMenuItem.setOnAction(event -> new login(primaryStage));
 	    manageProductsItem.setOnAction(event -> new ManageProducts(primaryStage, username));
 
 	}
@@ -116,18 +130,23 @@ labeltitle.setFont(Font.font("Arial", FontWeight.BOLD, 42));
 	    }
 
 	    public void loadListData() {
-	    	itemsList.add(new item("Product A", 10000.0));
-			itemsList.add(new item("Product B", 15000.0));
-			itemsList.add(new item("Product C", 20000.0));
+		    if (dbcon != null) {
+		        // Assuming you have a method in your databaseConnection class to retrieve item data
+		        ArrayList<item> itemsFromDatabase = dbcon.getAllItems();
 
-			ObservableList<String> items = FXCollections.observableArrayList();
-			for (item i : itemsList) {
-				items.add(i.getObjectname());
-			}
+		        itemsList.clear(); // Clear the existing list before adding items from the database
+		        itemsList.addAll(itemsFromDatabase);
 
-		    listView.getItems().clear();
-		    listView.setItems(items);
-        
+		        ObservableList<String> items = FXCollections.observableArrayList();
+		        for (item i : itemsList) {
+		            items.add(i.getObjectname());
+		        }
+
+		        listView.getItems().clear();
+		        listView.setItems(items);
+		    } else {
+		        System.err.println("Error: The 'dbcon' object is not initialized.");
+		    }
 	    }
 
 }
