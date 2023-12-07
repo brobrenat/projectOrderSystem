@@ -13,8 +13,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import main.Main;
+import main.databaseConnection;
 
 public class ManageProducts {
 	private Stage primaryStage;
@@ -22,7 +24,7 @@ public class ManageProducts {
 	private String username;
 	GridPane kananGP;
 	Label labeltitle = new Label("Manage Products");
-	Label labeldesc = new Label("Select a prodcut to update");
+	Text labeldesc = new Text("Select a prodcut to update");
 	MenuBar menuBar = new MenuBar();
 	Menu homeMenu = new Menu("Home");
 	MenuItem homePageMenuItem = new MenuItem("Home Page");
@@ -31,6 +33,7 @@ public class ManageProducts {
 	Menu accountMenu = new Menu("Account");
 	MenuItem logoutMenuItem = new MenuItem("Log out");
 	VBox layout = new VBox();
+	databaseConnection dbcon;
 
 	Scene manageProductsScene;
 
@@ -89,6 +92,7 @@ public class ManageProducts {
 	public ManageProducts(Stage primaryStage, String username) {
 		this.primaryStage = primaryStage;
 		this.username = username;
+		this.dbcon = databaseConnection.getConnection();
 		labelname.setText("Welcome, " + username);
 		labelname.setFont(Font.font("Arial", FontWeight.BOLD, 21));
 		initialize();
@@ -100,14 +104,16 @@ public class ManageProducts {
 	}
 
 	private void setButtonEvent() {
+		labeldesc.setWrappingWidth(300);
 
 		listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue != null) {
 				labelname.setText(newValue);
-				labeldesc.setText("Description for : " + newValue);
+				String productDescription = dbcon.getProductDescription(newValue);
+				labeldesc.setText(productDescription);
 				eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
 				itemDescriptionTitle.setText(newValue);
-				itemDescriptionLabel.setText(newValue);
+				
 				eachprice.setVisible(true);
 				addBtn.setVisible(true);
 				tombolUpDel.setVisible(true);
@@ -165,7 +171,7 @@ public class ManageProducts {
 				
 				
 			});
-			
+			// remove button
 			reBtn.setOnMouseClicked(e -> {
 				labelname.setText(newValue);
 				labeldesc.setText("Description for : " + newValue);
@@ -207,43 +213,39 @@ public class ManageProducts {
 
 			    double newProductPrice = Double.parseDouble(newPriceText);
 
-			    // Update harga pada daftar item
-			    boolean updateSuccess = updateItemPrice(itemsList, selectedProduct, newProductPrice);
+			    // Update harga pada database
+			    dbcon.updateProductPrice(selectedProduct, newProductPrice);
 
-			    if (updateSuccess) {
-			        // Perbarui tampilan label harga jika pembaruan berhasil
-			        eachprice.setText("Price: Rp. " + getItemPrice(itemsList, selectedProduct));
+			    // Perbarui tampilan label harga jika pembaruan berhasil
+			    eachprice.setText("Price: Rp. " + getItemPrice(itemsList, selectedProduct));
 
-			        // Tampilkan Alert sukses
-			        showAlert(Alert.AlertType.INFORMATION, "Pembaruan berhasil", "Harga produk berhasil diperbarui.");
+			    // Tampilkan Alert sukses
+			    showAlert(Alert.AlertType.INFORMATION, "Pembaruan berhasil", "Harga produk berhasil diperbarui.");
 
-			        labelname.setText("Welcome, " + username);
-				    labeldesc.setText("Select a product to update");
-				    eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
-				    
-				    eachprice.setVisible(false);
-			        tombolUpDel.setVisible(false);
-			        addBtn.setVisible(true);
-			        addGP.setVisible(false);;
-			    } else {
-			        // Tampilkan Error Alert jika pembaruan tidak berhasil
-			        showAlert(Alert.AlertType.ERROR, "Gagal memperbarui harga", "Terjadi kesalahan dalam memperbarui harga produk.");
-			    }
+			    labelname.setText("Welcome, " + username);
+			    labeldesc.setText("Select a product to update");
+			    eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
+
+			    eachprice.setVisible(false);
+			    tombolUpDel.setVisible(false);
+			    addBtn.setVisible(true);
+			    addGP.setVisible(false);
 			});
+
 			
 			rePro.setOnMouseClicked(e -> {
-				 // Mendapatkan produk yang dipilih
 			    String selectedProduct = listView.getSelectionModel().getSelectedItem();
-
+			    
 			    // Validasi: Pastikan ada produk yang dipilih
 			    if (selectedProduct == null || selectedProduct.isEmpty()) {
 			        showAlert(Alert.AlertType.ERROR, "Pilih Produk", "Pilih produk yang akan dihapus.");
 			        return;
 			    }
 
-			    // Hapus produk dari list dan update tampilan
+			    // Hapus produk dari database dan update tampilan
 			    boolean deleteSuccess = deleteProduct(selectedProduct);
 			    if (deleteSuccess) {
+			    	dbcon.deleteProduct(selectedProduct);
 			        showAlert(Alert.AlertType.INFORMATION, "Hapus Produk Berhasil", "Produk berhasil dihapus.");
 			        labelname.setText("Welcome, " + username);
 			        labeldesc.setText("Select a product to update");
@@ -257,6 +259,7 @@ public class ManageProducts {
 			        showAlert(Alert.AlertType.ERROR, "Gagal Menghapus Produk", "Terjadi kesalahan dalam menghapus produk.");
 			    }
 			});
+
 		
 			});
 		
@@ -313,6 +316,7 @@ public class ManageProducts {
 		    String newProductName = productName.getText();
 		    String newProductPriceText = productPrice.getText();
 		    String newProductDesc = productDesc.getText();
+		    String newProductID = generateNextProductID();
 
 		    // Validasi: Semua bidang harus diisi
 		    if (newProductName.isEmpty() || newProductPriceText.isEmpty() || newProductDesc.isEmpty()) {
@@ -338,6 +342,8 @@ public class ManageProducts {
 
 		    // Jika semua validasi terpenuhi, tambahkan produk ke listview dan database
 		    itemsList.add(new item(newProductName, newProductPrice));
+		    dbcon.executeProdAdd(newProductID, newProductName, newProductPriceText, newProductDesc);
+		    
 
 		    // Update tampilan listview
 		    updateListView();
@@ -382,16 +388,33 @@ public class ManageProducts {
 		});
 
 		homeMenu.setOnAction(event -> new HomePageAdmin(primaryStage, username));
-		logoutMenuItem.setOnAction(event -> new login(primaryStage, mainInstance));
+		logoutMenuItem.setOnAction(event -> new login(primaryStage));
 		manageProductsItem.setOnAction(event -> new ManageProducts(primaryStage, username));
 
 	}
+	
+	private String generateNextProductID() {
+	    String lastProdID = dbcon.getLastRegisteredProdID();
+
+	    String numericPart = lastProdID.substring(2); // Extract the numeric part
+	    int nextNumber = Integer.parseInt(numericPart) + 1;
+	    
+	    String nextprodID = String.format("TE%04d", nextNumber);
+
+	    // Check if the generated ID already exists, if yes, regenerate
+	    while (dbcon.isProductIDExists(nextprodID)) {
+	        nextNumber++;
+	        nextprodID = String.format("TE%04d", nextNumber);
+	    }
+
+	    return nextprodID;
+	}
 
 	private boolean deleteProduct(String productName) {
-	    for (item i : itemsList) {
+		for (item i : itemsList) {
 	        if (i.getObjectname().equals(productName)) {
 	            itemsList.remove(i);
-	            updateListView();
+	            updateListView(); // Move this line outside the loop
 	            return true;  // Hapus berhasil
 	        }
 	    }
@@ -408,15 +431,13 @@ public class ManageProducts {
 	}
 
 	private void updateListView() {
-	    ObservableList<String> items = FXCollections.observableArrayList();
-	    for (item i : itemsList) {
-	        items.add(i.getObjectname());
-	    }
-	    listView.getItems().clear();
-	    listView.setItems(items);
+		 ObservableList<String> items = FXCollections.observableArrayList();
+		    for (item i : itemsList) {
+		        items.add(i.getObjectname());
+		    }
+		    listView.setItems(items); // Set the items once outside the loop
 	}
 
-	
 	private boolean updateItemPrice(ArrayList<item> items, String itemName, double newPrice) {
 	    for (item i : items) {
 	        if (i.getObjectname().equals(itemName)) {
@@ -497,9 +518,6 @@ public class ManageProducts {
 		addGP.setVgap(10);
 		
 	
-		
-		
-
 		eachprice.setVisible(false);
 		tombolUpDel.setVisible(false);
 		addGP.setVisible(false);
@@ -516,18 +534,47 @@ public class ManageProducts {
 	}
 
 	public void loadListData() {
-		itemsList.add(new item("Product A", 10000.0));
-		itemsList.add(new item("Product B", 15000.0));
-		itemsList.add(new item("Product C", 20000.0));
+		
+		if (dbcon != null) {
+	        // Assuming you have a method in your databaseConnection class to retrieve item data
+	        ArrayList<item> itemsFromDatabase = dbcon.getAllItems();
 
-		ObservableList<String> items = FXCollections.observableArrayList();
-		for (item i : itemsList) {
-			items.add(i.getObjectname());
-		}
+	        itemsList.clear(); // Clear the existing list before adding items from the database
+	        itemsList.addAll(itemsFromDatabase);
 
-		listView.getItems().clear();
-		listView.setItems(items);
+	        ObservableList<String> items = FXCollections.observableArrayList();
+	        for (item i : itemsList) {
+	            items.add(i.getObjectname());
+	        }
 
+	        listView.getItems().clear();
+	        listView.setItems(items);
+	    } else {
+	        System.err.println("Error: The 'dbcon' object is not initialized.");
+	    }
+		
+	    listView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+	        
+	    	if (newValue != null) {
+	            // Fetch the product description from the database
+	            String productDescription = dbcon.getProductDescription(newValue);
+
+	            // Display the product description
+	            itemDescriptionLabel.setText(productDescription);
+
+	            // Other code remains the same
+	            eachprice.setText(String.valueOf(getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem())));
+	            itemDescriptionTitle.setText(newValue);
+	            itemDescriptionLabel.setVisible(true);
+	            double price = getItemPrice(itemsList, newValue);
+	        } else {
+	            // If no product is selected, hide the product description box
+	            hbox.getChildren().remove(itemDescriptionLabel);
+	            
+	        }
+	    });
 	}
+
+	
 
 }
