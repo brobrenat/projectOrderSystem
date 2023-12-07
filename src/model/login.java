@@ -1,10 +1,16 @@
 package model;
 
 import main.Main;
+import main.databaseConnection;
+
+import java.sql.Connection;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -30,11 +36,11 @@ public class login {
 	GridPane gridPane = new GridPane();
 	Scene login;
 	private Stage primaryStage;
-	private Main mainInstance;
-
-	public login(Stage primaryStage, Main mainInstance) {
+	databaseConnection dbcon;
+	
+	public login(Stage primaryStage) {
 		this.primaryStage = primaryStage;
-		this.mainInstance = mainInstance;
+		this.dbcon = databaseConnection.getConnection();
 		initialize();
 		setbuttonevent();
 		primaryStage.setTitle("Login");
@@ -46,28 +52,50 @@ public class login {
 		registerLink.setOnAction(e -> new registration(primaryStage));
 
 		loginButton.setOnAction(e -> {
-			String username = usernameField.getText();
-			String password = passwordField.getText();
+            String username = usernameField.getText();
+            String password = passwordField.getText();
 
-			if (username.isEmpty() || password.isEmpty()) {
-				mainInstance.showErrorAlert("Failed to Login", "All fields Must be filled");
-			} else if ((username.equals("123") && password.equals("123"))
-					|| (username.equals("admin") && password.equals("123"))) {
+            if (username.isEmpty() || password.isEmpty()) {
+                showErrorAlert("Failed to Login", "All fields must be filled");
+            } else {
+                // Check credentials against database
+                if (dbcon.authenticateUser(username, password) != null) {
+                    showSuccess("Login successful");
+                    // Redirect to the appropriate home page based on the user's role
+                    if (dbcon.getUserRole(username).equals("admin")) {
+                        new HomePageAdmin(primaryStage);
+                    } else {
+                        new HomePageCus(primaryStage);
+                    }
+                } else {
+                    showErrorAlert("Failed to Login", "Invalid credentials");
+                }
+            }
+        });
 
-				new HomePageCus(primaryStage);
-				if (username.equals("admin")) {
-					new HomePageAdmin(primaryStage);
-					// primaryStage.setScene(homePageAdmin.homeScene);
+	}
+	
+	public void showSuccess(String message) {
+		Alert alert = new Alert(Alert.AlertType.INFORMATION);
+		alert.setTitle("Success");
+		alert.setContentText(message);
 
-				}
-			} else {
-				mainInstance.showErrorAlert("Failed to Login", "Invalid Credentials");
-			}
-		});
+		alert.showAndWait();
 
 	}
 
-	private void initialize() {
+	
+	public void showErrorAlert(String header, String content) {
+		Alert alert = new Alert(Alert.AlertType.ERROR);
+		alert.setTitle("Error");
+
+		DialogPane dialogPane = alert.getDialogPane();
+		dialogPane.setHeaderText(header);
+		dialogPane.setContentText(content);
+
+		alert.showAndWait();
+	}
+ void initialize() {
 		// TODO Auto-generated method stub
 		loginLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
 
