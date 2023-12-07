@@ -60,12 +60,14 @@ public class login {
             } else {
                 // Check credentials against database
                 if (dbcon.authenticateUser(username, password) != null) {
+                	System.out.println(dbcon.getUserRole(username));
                     showSuccess("Login successful");
                     // Redirect to the appropriate home page based on the user's role
-                    if (dbcon.getUserRole(username).equals("admin")) {
-                        new HomePageAdmin(primaryStage);
+                    if (dbcon.getUserRole(username).equals("Admin")) {
+                    	
+                        new HomePageAdmin(primaryStage, username);
                     } else {
-                        new HomePageCus(primaryStage);
+                        new HomePageCus(primaryStage, username);
                     }
                 } else {
                     showErrorAlert("Failed to Login", "Invalid credentials");
@@ -95,7 +97,8 @@ public class login {
 
 		alert.showAndWait();
 	}
- void initialize() {
+	
+	void initialize() {
 		// TODO Auto-generated method stub
 		loginLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
 
