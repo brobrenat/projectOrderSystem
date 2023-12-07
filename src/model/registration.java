@@ -2,6 +2,15 @@
 package model;
 
 import main.Main;
+import main.databaseConnection;
+import java.util.concurrent.atomic.AtomicReference;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -13,7 +22,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-public class registration {
+public class registration implements EventHandler<ActionEvent> {
 	private Stage primaryStage;
 	private Main mainInstance;
 	Scene registration;
@@ -41,6 +50,10 @@ public class registration {
 	Button registerButton = new Button("Register");
 	HBox gendertoggle = new HBox(5);
 	HBox HaveAccountBox = new HBox(5);
+	databaseConnection dbcon= new databaseConnection();
+	Button check = new Button("Check");
+	private AtomicReference<String> gender = new AtomicReference<>("");
+
 
 	public registration(Stage primaryStage) {
 		this.primaryStage = primaryStage;
@@ -57,7 +70,7 @@ public class registration {
 		gridPane.setVgap(10);
 
 		registrationLabel.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-		loginLink.setOnAction(e -> new login(primaryStage,mainInstance));
+		loginLink.setOnAction(e -> new login(primaryStage));
 
 		usernameField.setPromptText("Input username...");
 		emailField.setPromptText("Input email...");
@@ -74,6 +87,9 @@ public class registration {
 		femaleRadioButton.setToggleGroup(genderToggle);
 
 		registerButton.setMaxWidth(175);
+		registerButton.setOnAction(this);
+		
+		check.setOnAction(this);
 
 		gendertoggle.getChildren().addAll(maleRadioButton, femaleRadioButton);
 		gendertoggle.setAlignment(Pos.CENTER_LEFT);
@@ -108,6 +124,7 @@ public class registration {
 		gridPane.add(termsCheckBox, 1, 8);
 		gridPane.add(HaveAccountBox, 1, 9);
 		gridPane.add(registerButton, 1, 10);
+		gridPane.add(check, 2, 10);
 
 		gridPane.setAlignment(Pos.CENTER);
 
@@ -121,21 +138,86 @@ public class registration {
 
 	}
 
-	private void setbuttonkey() {
-		registerButton.setOnAction(e -> {
+	public void showSuccess(String message) {
+		Alert alert = new Alert(Alert.AlertType.INFORMATION);
+		alert.setTitle("Success");
+		alert.setContentText(message);
 
-			boolean isValid = validateInputs(usernameField.getText(), emailField.getText(), passwordField.getText(),
-					confirmPasswordField.getText(), phoneNumberField.getText(), addressArea.getText(),
-					genderToggle.getSelectedToggle(), termsCheckBox.isSelected());
-
-			if (isValid) {
-				mainInstance.showSuccess("Registered Sucessfully");
-			} else {
-				mainInstance.showErrorAlert("Registration Failed", "Invalid inputs. Please check the fields.");
-			}
-		});
+		alert.showAndWait();
 
 	}
+
+	private void setbuttonkey() {
+		
+		
+		
+		maleRadioButton.setOnAction(e -> {
+            gender.set("Male");
+        });
+		
+		femaleRadioButton.setOnAction(e -> {
+			gender.set("Female");
+		});
+		
+//		if(event.getSource() == maleRadioButton) {
+//			gender = "Male";
+//		}else if(event.getSource() == femaleRadioButton){
+//			gender = "Female";
+//		}
+		
+		registerButton.setOnAction(e -> {
+		    String username = usernameField.getText();
+		    String password = passwordField.getText();
+		    String address = addressArea.getText();
+		    String phoneNumber = phoneNumberField.getText();
+		    String userid = generateNextUserID();
+		    String selectedGender = gender.get();
+		    String role = "User";
+
+		    boolean isValid = validateInputs(username, emailField.getText(), password,
+		            confirmPasswordField.getText(), phoneNumber, address, genderToggle.getSelectedToggle(), termsCheckBox.isSelected());
+
+		    if (isValid) {
+		        showSuccess("Registered Successfully");
+
+		        // Ensure none of the variables is null before making the database call
+		        if (userid!= null && username != null && password != null && address != null && phoneNumber != null && selectedGender != null) {
+		           dbcon.executeUpdate(userid, username, role, password, address, phoneNumber, selectedGender, "registration");
+		        } else {
+		            showErrorAlert("Registration Failed", "Invalid inputs. Please check the fields.");
+		        }
+		    } else {
+		        showErrorAlert("Registration Failed", "Invalid inputs. Please check the fields.");
+		    }
+		});
+
+		
+		check.setOnAction(this);
+
+	}
+	public void showErrorAlert(String header, String content) {
+		Alert alert = new Alert(Alert.AlertType.ERROR);
+		alert.setTitle("Error");
+
+		DialogPane dialogPane = alert.getDialogPane();
+		dialogPane.setHeaderText(header);
+		dialogPane.setContentText(content);
+
+		alert.showAndWait();
+	}
+
+	
+	private String generateNextUserID() {
+        String lastUserID = dbcon.getLastRegisteredUserID();
+
+        String numericPart = lastUserID.substring(2); // Extract the numeric part
+        int nextNumber = Integer.parseInt(numericPart) + 1;
+        
+        String nextUserID = String.format("CU%03d", nextNumber);
+
+        return nextUserID;
+    }
+	
 	private boolean validateInputs(String username, String email, String password, String confirmPassword,
 			String phoneNumber, String address, Toggle gender, boolean agreedTerms) {
 
@@ -166,5 +248,44 @@ public class registration {
 
 		return true;
 	}
+
+	
+	@Override
+	public void handle(ActionEvent event) {
+		String userID = "AD007";
+		String username = usernameField.getText();
+		String password = passwordField.getText();
+		String phoneNum = phoneNumberField.getText();
+		String address = addressArea.getText();
+		String role = "User";
+		String gender = "";
+		if(event.getSource() == maleRadioButton) {
+			gender = "Male";
+		}else if(event.getSource() == femaleRadioButton){
+			gender = "Female";
+		}
+		
+		if(event.getSource() == registerButton) {
+			//input data ke database
+			dbcon.executeUpdate(username, password, address, phoneNum, gender, "registration", userID, role);
+		}
+			//else if(event.getSource() == check) {
+//			buat ambil data dari database
+			ResultSet rs = dbcon.executeQuery(username);
+			
+			try {
+				while(rs != null && rs.next()) {
+					System.out.println(rs.getString("username"));
+				}
+			} catch (SQLException e1) {
+				
+				e1.printStackTrace();
+			}
+			
+		
+		
+	}
+		
+
 
 }
