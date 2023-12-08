@@ -53,14 +53,14 @@ public class mycart {
 	Label subtotal, orderinfo, phonenum, address;
 	private String username;
 	ArrayList<transaction> transactions = new ArrayList<>();
+	ArrayList<user> userList = new ArrayList<>();
 
-	public mycart(Stage primaryStage, ArrayList<cart> cartItems, ListView<String> cartListView,String username) {
-		this.primaryStage = primaryStage;
-		this.cartItems = cartItems;
-		this.username = username;
+	public mycart(Stage primaryStage, ArrayList<cart> cartItems, ListView<String> cartListView, String username) {
+	    this.primaryStage = primaryStage;
+	    this.cartItems = cartItems;
+	    this.username = username;
 		labeltitle.setText(username+"'s"+" Cart");
-		
-		System.out.println("Number of items in cartItems: " + cartItems.size());
+		retrieveUserInfo(username);
 		initialize();
 		setbuttonevent();
 		primaryStage.setScene(mycart);
@@ -70,7 +70,9 @@ public class mycart {
 	}
 
 	private void initialize() {
+
 		checkEmptyCart();
+		System.out.println(userList.size());
 		labeltitle.setPadding(new Insets(10));
 		labeltitle.setFont(Font.font("Arial", FontWeight.BOLD, 42));
 		labelname.setFont(Font.font("Arial", FontWeight.BOLD, 21));
@@ -93,7 +95,7 @@ public class mycart {
 		subtotal = new Label("Total : Rp. 0.00");
 		orderinfo = new Label("Order Information");
 		orderinfo.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-		Label usernamesh = new Label("Username : ");
+		Label usernamesh = new Label("Username : "+username);
 		phonenum = new Label("Phone Number : ");
 		address = new Label("Address : ");
 		purchase.setMaxWidth(150);
@@ -110,6 +112,25 @@ public class mycart {
 		updateSubtotalLabel();
 
 	}
+
+	 public void retrieveUserInfo(String username) {
+	        for (user user : userList) {
+	            if (user.getUsername().equals(username)) {
+	                String phoneNumber = user.getPhoneNumber();
+	                String userAddress = user.getAddress();
+
+	        
+	                phonenum.setText("Phone Number: " + phoneNumber);
+	                address.setText("Address: " + userAddress);
+
+	                break; 
+	            }
+	        }
+	    }
+	 public void addtotransaction(transaction newTransaction) {
+	        newTransaction.setTransactionId(generateTransactionId(transactions.size() + 1));
+	        newTransaction.setCartItems(cartItems);
+	    }
 
 	private void checkEmptyCart() {
 		if (calculateTotalPrice() == 0) {
@@ -242,10 +263,13 @@ public class mycart {
 		    ButtonType buttonNo = new ButtonType("No", ButtonBar.ButtonData.CANCEL_CLOSE);
 		    confirmation.getButtonTypes().setAll(buttonYes, buttonNo);
 			confirmation.showAndWait().ifPresent(response -> {
-				if (response == ButtonType.OK) {
+				if (response.equals(buttonYes)) {
 					String transactionId = generateTransactionId(transactions.size() + 1);
-					transaction newTransaction = new transaction(transactionId, new ArrayList<>(cartItems));
+					transaction newTransaction = new transaction(transactionId, cartItems);
+					addtotransaction(newTransaction);
 					transactions.add(newTransaction);
+					
+					System.out.println(cartItems);
 					Alert alert = new Alert(Alert.AlertType.INFORMATION);
 			        alert.setTitle("Message");
 			        alert.setHeaderText(null);
@@ -266,9 +290,10 @@ public class mycart {
 			
 			
 		});
-		homeMenu.setOnAction(event -> new HomePageCus(primaryStage,username));
+		homeMenu.setOnAction(event -> new HomePageCus(primaryStage, username));
 		logoutMenuItem.setOnAction(event -> new login(primaryStage, mainInstance));
-		purchaseHistoryMenuItem.setOnAction(event -> new purchasehistory(primaryStage, cartItems, cartListView, username));
+		purchaseHistoryMenuItem.setOnAction(event -> new purchasehistory(primaryStage, cartItems, cartListView, username, transactions));
+
 
 	}
 
