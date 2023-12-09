@@ -14,6 +14,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import main.Main;
+import main.databaseConnection;
 
 public class mycart {
 
@@ -54,9 +55,11 @@ public class mycart {
 	private String username;
 	ArrayList<transaction> transactions = new ArrayList<>();
 	ArrayList<user> userList = new ArrayList<>();
+	databaseConnection dbcon = new databaseConnection();
 
 	public mycart(Stage primaryStage, ArrayList<cart> cartItems, ListView<String> cartListView, String username) {
 	    this.primaryStage = primaryStage;
+	    this.dbcon = databaseConnection.getConnection();
 	    this.cartItems = cartItems;
 	    this.username = username;
 		labeltitle.setText(username+"'s"+" Cart");
@@ -80,9 +83,9 @@ public class mycart {
 		cartListView.setMaxWidth(400);
 		HBox.setHgrow(cartListView, Priority.ALWAYS);
 		homeMenu.getItems().add(homePageMenuItem);
-		cartMenu.getItems().add(myCartMenuItem);
-		accountMenu.getItems().addAll(logoutMenuItem, purchaseHistoryMenuItem);
-		menuBar.getMenus().addAll(homeMenu, cartMenu, accountMenu);
+	    cartMenu.getItems().add(myCartMenuItem);
+	    accountMenu.getItems().addAll(logoutMenuItem, purchaseHistoryMenuItem);
+	    menuBar.getMenus().addAll(homeMenu, cartMenu, accountMenu);    
 		VBox.setMargin(hbox, new Insets(0, 0, 0, 0));
 		labeltitle.setPadding(new Insets(10));
 		itemDescriptionLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
@@ -101,8 +104,10 @@ public class mycart {
 		purchase.setMaxWidth(150);
 		VBox cartinfo = new VBox(subtotal, orderinfo, usernamesh, phonenum, address, purchase);
 		VBox tampilanjudul = new VBox(labeltitle, hbox, cartinfo);
-		cartinfo.setPadding(new Insets(10));
-		cartinfo.setSpacing(5);
+	    cartinfo.setPadding(new Insets(10));
+	    cartinfo.setSpacing(5);
+		clearListView();
+	    loadListView();
 		itemDescriptionBox.setSpacing(2);
 		VBox mainVB = new VBox(menuBar, tampilanjudul, itemDescriptionBox);
 		mainVB.setSpacing(4);
@@ -113,7 +118,12 @@ public class mycart {
 
 	}
 
-	 public void retrieveUserInfo(String username) {
+	 private void clearListView() {
+		 cartListView.getItems().clear();
+		
+	}
+
+	public void retrieveUserInfo(String username) {
 	        for (user user : userList) {
 	            if (user.getUsername().equals(username)) {
 	                String phoneNumber = user.getPhoneNumber();
@@ -127,7 +137,8 @@ public class mycart {
 	            }
 	        }
 	    }
-	 public void addtotransaction(transaction newTransaction) {
+	 
+	public void addtotransaction(transaction newTransaction) {
 	        newTransaction.setTransactionId(generateTransactionId(transactions.size() + 1));
 	        newTransaction.setCartItems(cartItems);
 	    }
@@ -147,12 +158,12 @@ public class mycart {
 	}
 
 	private void loadListView() {
-		ObservableList<String> cartItemNames = FXCollections.observableArrayList();
-		for (cart cartItem : cartItems) {
-			cartItemNames.add(cartItem.getObjectquantity() + "x " + cartItem.getObjectname() + " ( Rp."
-					+ (cartItem.getObjectprice() * cartItem.getObjectquantity()) + ")");
-		}
-		cartListView.getItems().addAll(cartItemNames);
+        ObservableList<String> cartItemNames = FXCollections.observableArrayList();
+        for (cart cartItem : cartItems) {
+            cartItemNames.add(cartItem.getObjectquantity() + "x " + cartItem.getObjectname() + " ( Rp."
+                    + (cartItem.getObjectprice() * cartItem.getObjectquantity()) + ")");
+        }
+        cartListView.getItems().addAll(cartItemNames);
 	}
 
 	private double getItemPrice(ArrayList<item> items, String itemname) {
@@ -175,6 +186,9 @@ public class mycart {
 	}
 
 	private void setbuttonevent() {
+		String currentuser = username; 
+	    String userID = dbcon.getUserIDByUsername(currentuser);
+		
 		cartListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			itemDescriptionBox.setVisible(true);
 			if (newValue != null) {
@@ -217,42 +231,69 @@ public class mycart {
 			int spinnerValue = quantity.getValue();
 
 			if (spinnerValue < 0) {
-				int newQuantity = cartQuantity + spinnerValue;
-				if (newQuantity >= 0) {
-					updateCartQuantity(selectedItem, newQuantity);
-					updateListView(selectedItem, newQuantity);
-				} else {
-					Alert alert = new Alert(Alert.AlertType.ERROR);
-			        alert.setTitle("Error");
-			        alert.setHeaderText(null);
-			        alert.setContentText("Quantity is not valid!");
-			        alert.showAndWait();
-				}
-			} else if (spinnerValue == 0) {
-				removeItemFromCart(selectedItem);
-			} else if (spinnerValue > 0) {
-				updateCartQuantity(selectedItem, spinnerValue);
-				updateListView(selectedItem, spinnerValue);
-			}
+		        int newQuantity = cartQuantity + spinnerValue;
+		        if (newQuantity >= 0) {
+		            updateCartQuantity(selectedItem, newQuantity);
+		            updateListView(selectedItem, newQuantity);
+		            
+		           
+		            String productID = dbcon.getProductIDByName(selectedItem);
+		            dbcon.updateCartQuantityInDatabase(productID, userID, newQuantity);
+		        } else {
+		            Alert alert = new Alert(Alert.AlertType.ERROR);
+		            alert.setTitle("Error");
+		            alert.setHeaderText(null);
+		            alert.setContentText("Quantity is not valid!");
+		            alert.showAndWait();
+		        }
+		    } else if (spinnerValue == 0) {
+		        
+		    } else if (spinnerValue > 0) {
+		        updateCartQuantity(selectedItem, spinnerValue);
+		        updateListView(selectedItem, spinnerValue);
+
+		       
+		        String productID = dbcon.getProductIDByName(selectedItem);
+		        dbcon.updateCartQuantityInDatabase(productID, userID, spinnerValue);
+		    }
+			
 			updateSubtotalLabel();
 			itemDescriptionBox.setVisible(false);
 			labelname.setVisible(false);
 			labeldesc.setVisible(false);
 		});
+		
+		purchaseHistoryMenuItem.setOnAction(event -> {
+		    purchasehistory purchaseHistoryPage = new purchasehistory(primaryStage, cartItems, cartListView, username, transactions);
+		    primaryStage.setScene(purchaseHistoryPage.getScene());
+		});
 
 		removecart.setOnAction(event -> {
-			String selectedItem = cartListView.getSelectionModel().getSelectedItem();
-			String productName = extractProductName(selectedItem);
-			removeItemFromCart(productName);
-			updateSubtotalLabel();
-			Alert alert = new Alert(Alert.AlertType.INFORMATION);
-	        alert.setTitle("Message");
-	        alert.setHeaderText(null);
-	        alert.setContentText("Deleted from Cart");
-	        alert.showAndWait();
-	        labelname.setVisible(true);
-			labeldesc.setVisible(true);
+		    String selectedItem = cartListView.getSelectionModel().getSelectedItem();
+		    String productName = extractProductName(selectedItem);
+		    String productID = dbcon.getProductIDByName(productName);
+		    
+		    boolean isDeleted = dbcon.deleteCartItem(productID, userID);
+
+		    if (isDeleted) {
+		        removeItemFromCart(productName);
+		        updateSubtotalLabel();
+		        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+		        alert.setTitle("Message");
+		        alert.setHeaderText(null);
+		        alert.setContentText("Deleted from Cart");
+		        alert.showAndWait();
+		        labelname.setVisible(true);
+		        labeldesc.setVisible(true);
+		    } else {
+		        Alert alert = new Alert(Alert.AlertType.ERROR);
+		        alert.setTitle("Error");
+		        alert.setHeaderText(null);
+		        alert.setContentText("Failed to delete item from Cart");
+		        alert.showAndWait();
+		    }
 		});
+
 
 		purchase.setOnAction(event -> {
 		    Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
@@ -291,7 +332,7 @@ public class mycart {
 			
 		});
 		homeMenu.setOnAction(event -> new HomePageCus(primaryStage, username));
-		logoutMenuItem.setOnAction(event -> new login(primaryStage, mainInstance));
+		logoutMenuItem.setOnAction(event -> new login(primaryStage));
 		purchaseHistoryMenuItem.setOnAction(event -> new purchasehistory(primaryStage, cartItems, cartListView, username, transactions));
 
 
@@ -372,6 +413,10 @@ public class mycart {
 
 	private String generateTransactionId(int index) {
 		return "TR" + String.format("%03d", index);
+	}
+
+	public Scene getScene() {
+		return mycart;
 	}
 
 }
