@@ -6,13 +6,20 @@ public class cart {
 	private Double objectprice;
 	private String objectdescription;
 	private  Integer objectquantity;
-	public cart(String objectname, Double objectprice, String objectdescription, Integer objectquantity) {
-		super();
-		this.objectname = objectname;
-		this.objectprice = objectprice;
-		this.objectdescription = objectdescription;
-		this.objectquantity = objectquantity;
+	private String objectID;
+	
+	public cart(String objectname, Double objectprice, Integer objectquantity, String objectdescription) {
+	    super();
+	    this.objectname = objectname;
+	    this.objectprice = objectprice;
+	    this.objectquantity = objectquantity;
+	    this.objectdescription = objectdescription;
 	}
+	
+	public cart(String objectname, Double objectprice) {
+	    this(objectname, objectprice, 1, ""); 
+	}
+
 	public String getObjectname() {
 		return objectname;
 	}
@@ -37,5 +44,13 @@ public class cart {
 	public void setObjectquantity(Integer objectquantity) {
 		this.objectquantity = objectquantity;
 	}
+	
+	public String getObjectID() { 
+        return objectID;
+    }
+
+    public void setObjectID(String objectID) { 
+        this.objectID = objectID;
+    }
 
 }
