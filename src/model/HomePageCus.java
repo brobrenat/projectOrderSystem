@@ -1,9 +1,11 @@
 package model;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -51,13 +53,15 @@ public class HomePageCus {
 	HBox quantspin = new HBox(quantlabel, quantity, totalprice);
     private ArrayList<cart> cartItems = new ArrayList<>();
 	databaseConnection dbcon;
+	
 
-
-
-	public HomePageCus(Stage primaryStage) {
+	public HomePageCus(Stage primaryStage, String username) {
 		this.primaryStage = primaryStage;
 		this.dbcon = databaseConnection.getConnection();
         this.username = username;
+        
+       
+        
 		labelname.setText("Welcome, "+ username);
 		labelname.setFont(Font.font("Arial", FontWeight.BOLD, 21));
 		initialize();
@@ -95,10 +99,10 @@ public class HomePageCus {
 
 	private void loadListData() {
 	    if (dbcon != null) {
-	        // Assuming you have a method in your databaseConnection class to retrieve item data
+	        
 	        ArrayList<item> itemsFromDatabase = dbcon.getAllItems();
 
-	        itemsList.clear(); // Clear the existing list before adding items from the database
+	        itemsList.clear(); 
 	        itemsList.addAll(itemsFromDatabase);
 
 	        ObservableList<String> items = FXCollections.observableArrayList();
@@ -160,9 +164,23 @@ public class HomePageCus {
 			totalprice.setText("Total : Rp. " + String.format("%.2f", totalPrice)); 
 		});
 		
-		homeMenu.setOnAction(event -> new HomePageCus(primaryStage));
+		myCartMenuItem.setOnAction(event -> {
+	        mycart myCartPage = new mycart(primaryStage, cartItems, listView, username);
+	        primaryStage.setScene(myCartPage.getScene());
+	    });
+
+	    purchaseHistoryMenuItem.setOnAction(event -> {
+	        purchasehistory purchaseHistoryPage = new purchasehistory(primaryStage, cartItems, listView, username, null);
+	        primaryStage.setScene(purchaseHistoryPage.getScene());
+	    });
+		
+
+		homeMenu.setOnAction(event -> {
+
+            new HomePageCus(primaryStage, username);
+        });
 		logoutMenuItem.setOnAction(event -> new login(primaryStage));
-		//myCartMenuItem.setOnAction(event -> new mycart(primaryStage, cartItems, listView,username));
+		
 		addtocart.setOnAction(event ->  addToCart());
 
 	}
@@ -171,8 +189,11 @@ public class HomePageCus {
 	private void addToCart() {
 	    String selectedItem = listView.getSelectionModel().getSelectedItem();
 	    int selectedQuantity = quantity.getValue();
+	    String currentuser = username; 
+	    String userID = dbcon.getUserIDByUsername(currentuser);
 
 	    if (selectedItem != null && selectedQuantity > 0) {
+	     
 	        boolean found = false;
 	        for (cart item : cartItems) {
 	            if (item.getObjectname().equals(selectedItem)) {
@@ -184,16 +205,27 @@ public class HomePageCus {
 	        }
 
 	        if (!found) {
+	         
 	            double price = getItemPrice(itemsList, selectedItem);
-	            cart cartItem = new cart(selectedItem, price, "Description", selectedQuantity);
+	            cart cartItem = new cart(selectedItem, price, selectedQuantity, "Description");
 	            cartItems.add(cartItem);
+	            
+	            String productID = dbcon.getProductIDByName(selectedItem);
+	            
+	            dbcon.addToTableCart(productID, userID, selectedQuantity);
+				
+				Alert alert = new Alert(Alert.AlertType.INFORMATION);
+				alert.setTitle("Message");
+				alert.setHeaderText(null);
+				alert.setContentText("Item Added to Cart");
+				alert.showAndWait();
 	        }
-	        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-	        alert.setTitle("Message");
-	        alert.setHeaderText(null);
-	        alert.setContentText("Item Added to Cart");
-	        alert.showAndWait();	    }
+	    }
 	}
+
+
+
+	
 
 
 }
