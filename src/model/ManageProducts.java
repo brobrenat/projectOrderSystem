@@ -142,6 +142,40 @@ public class ManageProducts {
 				addGP.setVisible(false);
 
 			}
+
+				addBtn.setOnMouseClicked(e -> {
+
+				labelname.setText(newValue);
+				labeldesc.setText("Description for : " + newValue);
+				eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
+				itemDescriptionTitle.setText(newValue);
+				itemDescriptionLabel.setText(newValue);
+				
+				eachprice.setVisible(true);
+				addGP.setVisible(true);
+				
+				inputProductName.setVisible(true);
+				productName.setVisible(true);
+				inputProductPrice.setVisible(true);
+				productPrice.setVisible(true);
+				inputProductDesc.setVisible(true);
+				productDesc.setVisible(true);
+				addbackBut.setVisible(true);
+				
+				delLabel.setVisible(false);
+				deleteBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+				addBtn.setVisible(false);
+				upProduct.setVisible(false);
+				newPrice.setVisible(false);
+				updateBut.setVisible(false);
+				
+				 productName.clear();
+				    productPrice.clear();
+				    productDesc.clear();
+				
+			});
 			
 			//klik tombol update product (upBtn)
 			upBtn.setOnMouseClicked(e -> {
