@@ -146,7 +146,8 @@ public class ManageProducts {
 				addBtn.setOnMouseClicked(e -> {
 
 				labelname.setText(newValue);
-				labeldesc.setText("Description for : " + newValue);
+				String productDescription = dbcon.getProductDescription(newValue);
+				labeldesc.setText(productDescription);
 				eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
 				itemDescriptionTitle.setText(newValue);
 				itemDescriptionLabel.setText(newValue);
@@ -180,12 +181,18 @@ public class ManageProducts {
 			//klik tombol update product (upBtn)
 			upBtn.setOnMouseClicked(e -> {
 				labelname.setText(newValue);
-				labeldesc.setText("Description for : " + newValue);
+				String productDescription = dbcon.getProductDescription(newValue);
+				labeldesc.setText(productDescription);
 				eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
 				itemDescriptionTitle.setText(newValue);
 				itemDescriptionLabel.setText(newValue);
 				eachprice.setVisible(true);
 				addGP.setVisible(true);
+				
+				addBtn.setVisible(false);
+				tombolUpDel.setVisible(false);
+				
+				
 				upProduct.setVisible(true);
 				newPrice.setVisible(true);
 				updateBut.setVisible(true);
@@ -208,15 +215,20 @@ public class ManageProducts {
 			// remove button
 			reBtn.setOnMouseClicked(e -> {
 				labelname.setText(newValue);
-				labeldesc.setText("Description for : " + newValue);
+				String productDescription = dbcon.getProductDescription(newValue);
+				labeldesc.setText(productDescription);
 				eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
 				itemDescriptionTitle.setText(newValue);
 				itemDescriptionLabel.setText(newValue);
 				eachprice.setVisible(true);
 				addGP.setVisible(true);
 				
+				
 				delLabel.setVisible(true);
 				deleteBut.setVisible(true);
+				
+				addBtn.setVisible(false);
+				tombolUpDel.setVisible(false);
 				
 				upProduct.setVisible(false);
 				newPrice.setVisible(false);
@@ -256,14 +268,36 @@ public class ManageProducts {
 			    // Tampilkan Alert sukses
 			    showAlert(Alert.AlertType.INFORMATION, "Pembaruan berhasil", "Harga produk berhasil diperbarui.");
 
-			    labelname.setText("Welcome, " + username);
-			    labeldesc.setText("Select a product to update");
-			    eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
-
-			    eachprice.setVisible(false);
-			    tombolUpDel.setVisible(false);
-			    addBtn.setVisible(true);
-			    addGP.setVisible(false);
+			    labelname.setText(newValue);
+				String productDescription = dbcon.getProductDescription(newValue);
+				labeldesc.setText(productDescription);
+				eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
+				itemDescriptionTitle.setText(newValue);
+				itemDescriptionLabel.setText(newValue);
+				
+				eachprice.setVisible(true);
+				addGP.setVisible(true);
+				
+				inputProductName.setVisible(true);
+				productName.setVisible(true);
+				inputProductPrice.setVisible(true);
+				productPrice.setVisible(true);
+				inputProductDesc.setVisible(true);
+				productDesc.setVisible(true);
+				addbackBut.setVisible(true);
+				
+				delLabel.setVisible(false);
+				deleteBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+				addBtn.setVisible(false);
+				upProduct.setVisible(false);
+				newPrice.setVisible(false);
+				updateBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+		        addBtn.setVisible(true);
+		        addGP.setVisible(false);;
 			});
 
 			
@@ -281,18 +315,225 @@ public class ManageProducts {
 			    if (deleteSuccess) {
 			    	dbcon.deleteProduct(selectedProduct);
 			        showAlert(Alert.AlertType.INFORMATION, "Hapus Produk Berhasil", "Produk berhasil dihapus.");
-			        labelname.setText("Welcome, " + username);
-			        labeldesc.setText("Select a product to update");
-			        eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
-
-			        eachprice.setVisible(false);
-			        tombolUpDel.setVisible(false);
+			        labelname.setText(newValue);
+					String productDescription = dbcon.getProductDescription(newValue);
+					labeldesc.setText(productDescription);
+					eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
+					itemDescriptionTitle.setText(newValue);
+					itemDescriptionLabel.setText(newValue);
+					
+					eachprice.setVisible(true);
+					addGP.setVisible(true);
+					
+					inputProductName.setVisible(true);
+					productName.setVisible(true);
+					inputProductPrice.setVisible(true);
+					productPrice.setVisible(true);
+					inputProductDesc.setVisible(true);
+					productDesc.setVisible(true);
+					addbackBut.setVisible(true);
+					
+					delLabel.setVisible(false);
+					deleteBut.setVisible(false);
+					
+					tombolUpDel.setVisible(false);
+					addBtn.setVisible(false);
+					upProduct.setVisible(false);
+					newPrice.setVisible(false);
+					updateBut.setVisible(false);
+					
+					tombolUpDel.setVisible(false);
 			        addBtn.setVisible(true);
-			        addGP.setVisible(false);
+			        addGP.setVisible(false);;
 			    } else {
 			        showAlert(Alert.AlertType.ERROR, "Gagal Menghapus Produk", "Terjadi kesalahan dalam menghapus produk.");
 			    }
 			});
+			
+			//Klik tomnol back yang add product
+			backBut.setOnMouseClicked(e -> {
+				labelname.setText(newValue);
+				String productDescription = dbcon.getProductDescription(newValue);
+				labeldesc.setText(productDescription);
+				eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
+				itemDescriptionTitle.setText(newValue);
+				itemDescriptionLabel.setText(newValue);
+				
+				eachprice.setVisible(true);
+				addGP.setVisible(true);
+				
+				inputProductName.setVisible(true);
+				productName.setVisible(true);
+				inputProductPrice.setVisible(true);
+				productPrice.setVisible(true);
+				inputProductDesc.setVisible(true);
+				productDesc.setVisible(true);
+				addbackBut.setVisible(true);
+				
+				delLabel.setVisible(false);
+				deleteBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+				addBtn.setVisible(false);
+				upProduct.setVisible(false);
+				newPrice.setVisible(false);
+				updateBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+		        addBtn.setVisible(true);
+		        addGP.setVisible(false);;
+				 productName.clear();
+				    productPrice.clear();
+				    productDesc.clear();
+				
+			    
+			});
+			// klik tombol add Product untuk add
+			addBut.setOnMouseClicked(e -> {
+				
+				   // Mendapatkan nilai dari input
+			    String newProductName = productName.getText();
+			    String newProductPriceText = productPrice.getText();
+			    String newProductDesc = productDesc.getText();
+			    String newProductID = generateNextProductID();
+
+			    // Validasi: Semua bidang harus diisi
+			    if (newProductName.isEmpty() || newProductPriceText.isEmpty() || newProductDesc.isEmpty()) {
+			        // Menampilkan Error Alert jika salah satu input tidak terisi
+			        showAlert(Alert.AlertType.ERROR, "Input tidak valid", "Semua bidang harus diisi.");
+			        return;
+			    }
+
+			    // Validasi: Nama produk harus unik
+			    if (isProductNameExists(newProductName)) {
+			        // Menampilkan Error Alert jika nama produk sudah ada
+			        showAlert(Alert.AlertType.ERROR, "Input tidak valid", "Nama produk harus unik.");
+			        return;
+			    }
+
+			    // Validasi: Harga produk harus lebih dari 0
+			    double newProductPrice = Double.parseDouble(newProductPriceText);
+			    if (newProductPrice <= 0) {
+			        // Menampilkan Error Alert jika harga produk tidak valid
+			        showAlert(Alert.AlertType.ERROR, "Input tidak valid", "Harga produk harus lebih dari 0.");
+			        return;
+			    }
+
+			    // Jika semua validasi terpenuhi, tambahkan produk ke listview dan database
+			    itemsList.add(new item(newProductName, newProductPrice));
+			    dbcon.executeProdAdd(newProductID, newProductName, newProductPriceText, newProductDesc);
+			    
+
+			    // Update tampilan listview
+			    updateListView();
+
+			    // Tampilkan Information Alert untuk notifikasi berhasil
+			    showAlert(Alert.AlertType.INFORMATION, "Tambah Produk Berhasil", "Produk berhasil ditambahkan.");
+				
+				labelname.setText(newValue);
+				String productDescription = dbcon.getProductDescription(newValue);
+				labeldesc.setText(productDescription);
+				eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
+				itemDescriptionTitle.setText(newValue);
+				itemDescriptionLabel.setText(newValue);
+				
+				eachprice.setVisible(true);
+				addGP.setVisible(true);
+				
+				inputProductName.setVisible(true);
+				productName.setVisible(true);
+				inputProductPrice.setVisible(true);
+				productPrice.setVisible(true);
+				inputProductDesc.setVisible(true);
+				productDesc.setVisible(true);
+				addbackBut.setVisible(true);
+				
+				delLabel.setVisible(false);
+				deleteBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+				addBtn.setVisible(false);
+				upProduct.setVisible(false);
+				newPrice.setVisible(false);
+				updateBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+		        addBtn.setVisible(true);
+		        addGP.setVisible(false);;
+				productName.clear();
+				productPrice.clear();
+				productDesc.clear();
+				
+			
+			});
+			
+			backUpdate.setOnMouseClicked(e -> {
+			   
+				labelname.setText(newValue);
+				String productDescription = dbcon.getProductDescription(newValue);
+				labeldesc.setText(productDescription);
+				eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
+				itemDescriptionTitle.setText(newValue);
+				itemDescriptionLabel.setText(newValue);
+				
+				eachprice.setVisible(true);
+				addGP.setVisible(true);
+				
+				inputProductName.setVisible(true);
+				productName.setVisible(true);
+				inputProductPrice.setVisible(true);
+				productPrice.setVisible(true);
+				inputProductDesc.setVisible(true);
+				productDesc.setVisible(true);
+				addbackBut.setVisible(true);
+				
+				delLabel.setVisible(false);
+				deleteBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+				addBtn.setVisible(false);
+				upProduct.setVisible(false);
+				newPrice.setVisible(false);
+				updateBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+		        addBtn.setVisible(true);
+		        addGP.setVisible(false);;
+			});
+			
+			backRemove.setOnMouseClicked(e -> {
+				labelname.setText(newValue);
+				String productDescription = dbcon.getProductDescription(newValue);
+				labeldesc.setText(productDescription);
+				eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
+				itemDescriptionTitle.setText(newValue);
+				itemDescriptionLabel.setText(newValue);
+				
+				eachprice.setVisible(true);
+				addGP.setVisible(true);
+				
+				inputProductName.setVisible(true);
+				productName.setVisible(true);
+				inputProductPrice.setVisible(true);
+				productPrice.setVisible(true);
+				inputProductDesc.setVisible(true);
+				productDesc.setVisible(true);
+				addbackBut.setVisible(true);
+				
+				delLabel.setVisible(false);
+				deleteBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+				addBtn.setVisible(false);
+				upProduct.setVisible(false);
+				newPrice.setVisible(false);
+				updateBut.setVisible(false);
+				
+				tombolUpDel.setVisible(false);
+		        addBtn.setVisible(true);
+		        addGP.setVisible(false);;
+			});
+
 
 		
 			});
@@ -397,30 +638,7 @@ public class ManageProducts {
 			
 		
 		});
-		
-		backUpdate.setOnMouseClicked(e -> {
-		    labelname.setText("Welcome, " + username);
-		    labeldesc.setText("Select a product to update");
-		    eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
-		    
-		    eachprice.setVisible(false);
-	        tombolUpDel.setVisible(false);
-	        addBtn.setVisible(true);
-	        addGP.setVisible(false);;
-		    
-		});
-		
-		backRemove.setOnMouseClicked(e -> {
-			 labelname.setText("Welcome, " + username);
-			    labeldesc.setText("Select a product to update");
-			    eachprice.setText("Price: Rp. " + getItemPrice(itemsList, listView.getSelectionModel().getSelectedItem()));
-			    
-			    eachprice.setVisible(false);
-		        tombolUpDel.setVisible(false);
-		        addBtn.setVisible(true);
-		        addGP.setVisible(false);;
-		});
-
+	
 		homeMenu.setOnAction(event -> new HomePageAdmin(primaryStage, username));
 		logoutMenuItem.setOnAction(event -> new login(primaryStage));
 		manageProductsItem.setOnAction(event -> new ManageProducts(primaryStage, username));
