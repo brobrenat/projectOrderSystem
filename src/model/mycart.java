@@ -147,18 +147,18 @@ public class mycart {
 		    }
 		}
 	 
-	public void addtotransaction(transaction newTransaction) {
-	    newTransaction.setTransactionId(generateTransactionId(transactions.size() + 1));
-	    newTransaction.setCartItems(cartItems);
+	 public void addtotransaction(transaction newTransaction) {
+		    newTransaction.setTransactionId(generateTransactionId(transactions.size() + 1));
+		    newTransaction.setCartItems(cartItems);
 
-	    for (cart cartItem : cartItems) {
-	        String productID = dbcon.getProductIDByName(cartItem.getObjectname());
-	        dbcon.insertTransactionDetail(newTransaction.getTransactionId(), productID, cartItem.getObjectquantity());
-	    }
+		    for (cart cartItem : cartItems) {
+		        String productID = dbcon.getProductIDByName(cartItem.getObjectname());
+		        int cartQuantity = cartItem.getObjectquantity();
+		        dbcon.insertTransactionDetail(newTransaction.getTransactionId(), productID, cartQuantity);
+		    }
 
-	    
-	    transactions.add(newTransaction);
-	}
+		    transactions.add(newTransaction);
+		}
 
 	private void checkEmptyCart() {
 		if (calculateTotalPrice() == 0) {
@@ -249,45 +249,33 @@ public class mycart {
 		    }
 		});
 
-
 		updatecart.setOnAction(event -> {
-			String selectedItem = extractProductName(cartListView.getSelectionModel().getSelectedItem());
-			int cartQuantity = getCartQuantity(selectedItem);
-			int spinnerValue = quantity.getValue();
-			int newQuantity = cartQuantity + spinnerValue;
-			
-			if (spinnerValue < 0) {
-		        
-		        if (newQuantity >= 0) {
-		            updateCartQuantity(selectedItem, newQuantity);
-		            updateListView(selectedItem, newQuantity);
-		            
-		           
-		            String productID = dbcon.getProductIDByName(selectedItem);
-		            dbcon.updateCartQuantityInDatabase(productID, userID, newQuantity);
-		        } else {
-		            Alert alert = new Alert(Alert.AlertType.ERROR);
-		            alert.setTitle("Error");
-		            alert.setHeaderText(null);
-		            alert.setContentText("Quantity is not valid!");
-		            alert.showAndWait();
-		        }
-		    } else if (spinnerValue == 0) {
-		        
-		    } else if (spinnerValue > 0) {
-		        updateCartQuantity(selectedItem, spinnerValue);
-		        updateListView(selectedItem, spinnerValue);
+		    String selectedItem = extractProductName(cartListView.getSelectionModel().getSelectedItem());
+		    int cartQuantity = getCartQuantity(selectedItem); // Get the cart quantity of the selected item
+		    
+		    String productID = dbcon.getProductIDByName(selectedItem);
+		    int newQuantity = cartQuantity + quantity.getValue(); // Get the value from the spinner
+		    
+		    if (newQuantity >= 0) {
+		        updateCartQuantity(selectedItem, newQuantity);
+		        updateListView(selectedItem, newQuantity);
 
-		       
-		        String productID = dbcon.getProductIDByName(selectedItem);
+		        // Update the database with the quantity shown in the ListView
 		        dbcon.updateCartQuantityInDatabase(productID, userID, newQuantity);
+
+		        updateSubtotalLabel();
+		        itemDescriptionBox.setVisible(false);
+		        labelname.setVisible(false);
+		        labeldesc.setVisible(false);
+		    } else {
+		        Alert alert = new Alert(Alert.AlertType.ERROR);
+		        alert.setTitle("Error");
+		        alert.setHeaderText(null);
+		        alert.setContentText("Quantity is not valid!");
+		        alert.showAndWait();
 		    }
-			
-			updateSubtotalLabel();
-			itemDescriptionBox.setVisible(false);
-			labelname.setVisible(false);
-			labeldesc.setVisible(false);
 		});
+		
 		
 		purchaseHistoryMenuItem.setOnAction(event -> {
 		    purchasehistory purchaseHistoryPage = new purchasehistory(primaryStage, cartItems, cartListView, username, transactions);
@@ -328,54 +316,44 @@ public class mycart {
 		    ButtonType buttonYes = new ButtonType("Yes", ButtonBar.ButtonData.OK_DONE);
 		    ButtonType buttonNo = new ButtonType("No", ButtonBar.ButtonData.CANCEL_CLOSE);
 		    confirmation.getButtonTypes().setAll(buttonYes, buttonNo);
-		    ArrayList<String> productIDsInCart = dbcon.getProductIDsInCart(userID);
-		    
-			
-		    
+
 		    confirmation.showAndWait().ifPresent(response -> {
 		        if (response.equals(buttonYes)) {
 		            String transactionId = generateTransactionId(transactions.size() + 1);
 		            transaction newTransaction = new transaction(transactionId, cartItems);
 		            addtotransaction(newTransaction);
 
-		            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-		            alert.setTitle("Message");
-		            alert.setHeaderText(null);
-		            alert.setContentText("Successfully Purchased");
-		            alert.showAndWait();
+		            for (cart cartItem : cartItems) {
+		                String productID = dbcon.getProductIDByName(cartItem.getObjectname());
+		                int cartQuantity = cartItem.getObjectquantity();
+		                dbcon.insertTransactionHeader(transactionId, userID);
+		                dbcon.insertTransactionDetail(transactionId, productID, cartQuantity);
+		            }
 
-		            ArrayList<String> productList = dbcon.getProductIDsInCart(userID);
-		            
-		          
-		                for (String productID : productIDsInCart) {
-		                	System.out.println("ProductID in Cart: " + productID);
-		                	int itemQuantity = dbcon.getProductQuantitiesInCart(productID, userID, "quantity");
-			                System.out.println("Product ID: " + productID + ", Quantity: " + itemQuantity);
-			                dbcon.insertTransactionHeader(transactionId, userID);
-			                dbcon.insertAllCartItemsIntoTransactionDetail(transactionId, userID, itemQuantity);
-		                }
-		  
-		
-		            
-		            
-		            
-		            
+		            // Clear cart and update UI after successful purchase
 		            dbcon.clearCart(userID);
-
 		            cartItems.clear();
 		            cartListView.getItems().clear();
 		            updateSubtotalLabel();
 		            checkEmptyCart();
-		            
+
+		            // Show a success message
+		            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+		            successAlert.setTitle("Success");
+		            successAlert.setHeaderText(null);
+		            successAlert.setContentText("Successfully Purchased");
+		            successAlert.showAndWait();
 		        } else {
-		            Alert alert = new Alert(Alert.AlertType.ERROR);
-		            alert.setTitle("Error");
-		            alert.setHeaderText(null);
-		            alert.setContentText("Failed to Make Transaction");
-		            alert.showAndWait();
+		            // Show a message if the user cancels the purchase
+		            Alert cancelAlert = new Alert(Alert.AlertType.ERROR);
+		            cancelAlert.setTitle("Error");
+		            cancelAlert.setHeaderText(null);
+		            cancelAlert.setContentText("Purchase Cancelled");
+		            cancelAlert.showAndWait();
 		        }
 		    });
 		});
+
 
 	
 		homeMenu.setOnAction(event -> new HomePageCus(primaryStage, username));
