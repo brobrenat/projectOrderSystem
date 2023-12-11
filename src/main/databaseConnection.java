@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import model.cart;
 import model.item;
 
 public class databaseConnection {
@@ -356,6 +357,7 @@ public class databaseConnection {
 	    }
 	}
 	
+	
 	public boolean deleteCartItem(String productID, String userID) {
 	    String query = "DELETE FROM cart WHERE productID = ? AND userID = ?";
 	    
@@ -435,32 +437,31 @@ public class databaseConnection {
 	    return false;
 	}
 
-	public void insertTransactionDetail(String transactionID, String productID, int quantity) {
-	    if (isTransactionIdExists(transactionID)) {
-	        String query = "INSERT INTO transaction_detail (transactionID, productID, quantity) VALUES (?, ?, ?)";
-
-	        try {
-	        
+	public boolean insertTransactionDetail(String transactionId, String productId, int quantity) {
+	    try {
+	        // Check if the transactionID exists in the transaction_header table
+	        if (isTransactionIdExists(transactionId) && isProductIDExists(productId)) {
+	            // Insert the transaction detail into transaction_detail table
+	            String query = "INSERT INTO transaction_detail (transactionId, productId, quantity) VALUES (?, ?, ?)";
 	            try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
-	                preparedStatement.setString(1, transactionID);
-	                preparedStatement.setString(2, productID);
+	                preparedStatement.setString(1, transactionId);
+	                preparedStatement.setString(2, productId);
 	                preparedStatement.setInt(3, quantity);
 
 	                int rowsAffected = preparedStatement.executeUpdate();
-
-	                if (rowsAffected > 0) {
-	                    System.out.println("Transaction detail added successfully.");
-	                } else {
-	                    System.out.println("Failed to add transaction detail.");
-	                }
+	                return rowsAffected > 0; // Return true if insertion was successful
 	            }
-	        } catch (SQLException e) {
-	            e.printStackTrace();
+	        } else {
+	            // Handle the case where either transactionId or productId doesn't exist
+	            System.out.println("TransactionID or ProductID does not exist.");
+	            return false;
 	        }
-	    } else {
-	        System.out.println("TransactionID does not exist in transaction_header.");
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return false;
 	    }
 	}
+
 	
 	public void insertAllCartItemsIntoTransactionDetail(String transactionID, String userID, int quantity) {
 	   
