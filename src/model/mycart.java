@@ -1,6 +1,8 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -60,11 +62,12 @@ public class mycart {
 	public mycart(Stage primaryStage, ArrayList<cart> cartItems, ListView<String> cartListView, String username) {
 	    this.primaryStage = primaryStage;
 	    this.dbcon = databaseConnection.getConnection();
+	    
 	    this.cartItems = cartItems;
 	    this.username = username;
 		labeltitle.setText(username+"'s"+" Cart");
-		retrieveUserInfo(username);
 		initialize();
+		retrieveUserInfo(username);
 		setbuttonevent();
 		primaryStage.setScene(mycart);
 		primaryStage.setTitle("Home");
@@ -75,6 +78,7 @@ public class mycart {
 	private void initialize() {
 
 		checkEmptyCart();
+		System.out.println("dbcon: " + dbcon);
 		System.out.println(userList.size());
 		labeltitle.setPadding(new Insets(10));
 		labeltitle.setFont(Font.font("Arial", FontWeight.BOLD, 42));
@@ -100,9 +104,11 @@ public class mycart {
 		orderinfo.setFont(Font.font("Arial", FontWeight.BOLD, 13));
 		Label usernamesh = new Label("Username : "+username);
 		phonenum = new Label("Phone Number : ");
-		address = new Label("Address : ");
+	    address = new Label("Address : ");
 		purchase.setMaxWidth(150);
 		VBox cartinfo = new VBox(subtotal, orderinfo, usernamesh, phonenum, address, purchase);
+	    cartinfo.setPadding(new Insets(10));
+	    cartinfo.setSpacing(5);
 		VBox tampilanjudul = new VBox(labeltitle, hbox, cartinfo);
 	    cartinfo.setPadding(new Insets(10));
 	    cartinfo.setSpacing(5);
@@ -123,25 +129,36 @@ public class mycart {
 		
 	}
 
-	public void retrieveUserInfo(String username) {
-	        for (user user : userList) {
-	            if (user.getUsername().equals(username)) {
-	                String phoneNumber = user.getPhoneNumber();
-	                String userAddress = user.getAddress();
+	 public void retrieveUserInfo(String username) {
+		    try {
+		        String phoneNumber = dbcon.getUserDetails(username, "phoneNum"); 
+		        String userAddress = dbcon.getUserDetails(username, "address");
 
-	        
-	                phonenum.setText("Phone Number: " + phoneNumber);
-	                address.setText("Address: " + userAddress);
-
-	                break; 
-	            }
-	        }
-	    }
+		        if (phoneNumber != null && userAddress != null) {
+		            phonenum.setText("Phone Number: " + phoneNumber);
+		            address.setText("Address: " + userAddress);
+		        } else {
+		            // Handle the case where user information is not found
+		            phonenum.setText("Phone Number: N/A");
+		            address.setText("Address: N/A");
+		        }
+		    } catch (Exception e) {
+		        e.printStackTrace();
+		    }
+		}
 	 
 	public void addtotransaction(transaction newTransaction) {
-	        newTransaction.setTransactionId(generateTransactionId(transactions.size() + 1));
-	        newTransaction.setCartItems(cartItems);
+	    newTransaction.setTransactionId(generateTransactionId(transactions.size() + 1));
+	    newTransaction.setCartItems(cartItems);
+
+	    for (cart cartItem : cartItems) {
+	        String productID = dbcon.getProductIDByName(cartItem.getObjectname());
+	        dbcon.insertTransactionDetail(newTransaction.getTransactionId(), productID, cartItem.getObjectquantity());
 	    }
+
+	    
+	    transactions.add(newTransaction);
+	}
 
 	private void checkEmptyCart() {
 		if (calculateTotalPrice() == 0) {
@@ -177,17 +194,21 @@ public class mycart {
 	}
 
 	private String extractProductName(String newValue) {
-		int startIndex = newValue.indexOf('x') + 1;
-		int endIndex = newValue.indexOf('(');
-		if (startIndex >= 0 && endIndex >= 0) {
-			return newValue.substring(startIndex, endIndex).trim();
-		}
-		return "";
+	    if (newValue != null) {
+	        int startIndex = newValue.indexOf('x') + 1;
+	        int endIndex = newValue.indexOf('(');
+	        if (startIndex >= 0 && endIndex >= 0) {
+	            return newValue.substring(startIndex, endIndex).trim();
+	        }
+	    }
+	    return "";
 	}
 
 	private void setbuttonevent() {
 		String currentuser = username; 
 	    String userID = dbcon.getUserIDByUsername(currentuser);
+	   
+
 		
 		cartListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			itemDescriptionBox.setVisible(true);
@@ -218,20 +239,25 @@ public class mycart {
 		});
 
 		quantity.valueProperty().addListener((observable, oldValue, newValue) -> {
-			String selectedItem = extractProductName(cartListView.getSelectionModel().getSelectedItem());
-			double price = getItemPrice(itemsList, selectedItem);
-			double totalPrice = price * newValue.intValue();
+		    String selectedItem = cartListView.getSelectionModel().getSelectedItem();
+		    if (selectedItem != null) {
+		        String productName = extractProductName(selectedItem);
+		        double price = getItemPrice(itemsList, productName);
+		        double totalPrice = price * newValue.intValue();
 
-			totalprice.setText("Total : Rp. " + String.format("%.2f", totalPrice));
+		        totalprice.setText("Total : Rp. " + String.format("%.2f", totalPrice));
+		    }
 		});
+
 
 		updatecart.setOnAction(event -> {
 			String selectedItem = extractProductName(cartListView.getSelectionModel().getSelectedItem());
 			int cartQuantity = getCartQuantity(selectedItem);
 			int spinnerValue = quantity.getValue();
-
+			int newQuantity = cartQuantity + spinnerValue;
+			
 			if (spinnerValue < 0) {
-		        int newQuantity = cartQuantity + spinnerValue;
+		        
 		        if (newQuantity >= 0) {
 		            updateCartQuantity(selectedItem, newQuantity);
 		            updateListView(selectedItem, newQuantity);
@@ -254,7 +280,7 @@ public class mycart {
 
 		       
 		        String productID = dbcon.getProductIDByName(selectedItem);
-		        dbcon.updateCartQuantityInDatabase(productID, userID, spinnerValue);
+		        dbcon.updateCartQuantityInDatabase(productID, userID, newQuantity);
 		    }
 			
 			updateSubtotalLabel();
@@ -294,7 +320,6 @@ public class mycart {
 		    }
 		});
 
-
 		purchase.setOnAction(event -> {
 		    Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
 		    confirmation.setTitle("Confirmation");
@@ -303,34 +328,56 @@ public class mycart {
 		    ButtonType buttonYes = new ButtonType("Yes", ButtonBar.ButtonData.OK_DONE);
 		    ButtonType buttonNo = new ButtonType("No", ButtonBar.ButtonData.CANCEL_CLOSE);
 		    confirmation.getButtonTypes().setAll(buttonYes, buttonNo);
-			confirmation.showAndWait().ifPresent(response -> {
-				if (response.equals(buttonYes)) {
-					String transactionId = generateTransactionId(transactions.size() + 1);
-					transaction newTransaction = new transaction(transactionId, cartItems);
-					addtotransaction(newTransaction);
-					transactions.add(newTransaction);
-					
-					System.out.println(cartItems);
-					Alert alert = new Alert(Alert.AlertType.INFORMATION);
-			        alert.setTitle("Message");
-			        alert.setHeaderText(null);
-			        alert.setContentText("Successfully Purchased");
-			        alert.showAndWait();
-			        cartItems.clear();
-					cartListView.getItems().clear();
-					updateSubtotalLabel();
-					checkEmptyCart();
-				}else {
-					Alert alert = new Alert(Alert.AlertType.ERROR);
-			        alert.setTitle("Error");
-			        alert.setHeaderText(null);
-			        alert.setContentText("Failed to Make Transaction");
-			        alert.showAndWait();
-				}
-			});
+		    ArrayList<String> productIDsInCart = dbcon.getProductIDsInCart(userID);
+		    
 			
-			
+		    
+		    confirmation.showAndWait().ifPresent(response -> {
+		        if (response.equals(buttonYes)) {
+		            String transactionId = generateTransactionId(transactions.size() + 1);
+		            transaction newTransaction = new transaction(transactionId, cartItems);
+		            addtotransaction(newTransaction);
+
+		            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+		            alert.setTitle("Message");
+		            alert.setHeaderText(null);
+		            alert.setContentText("Successfully Purchased");
+		            alert.showAndWait();
+
+		            ArrayList<String> productList = dbcon.getProductIDsInCart(userID);
+		            
+		          
+		                for (String productID : productIDsInCart) {
+		                	System.out.println("ProductID in Cart: " + productID);
+		                	int itemQuantity = dbcon.getProductQuantitiesInCart(productID, userID, "quantity");
+			                System.out.println("Product ID: " + productID + ", Quantity: " + itemQuantity);
+			                dbcon.insertTransactionHeader(transactionId, userID);
+			                dbcon.insertAllCartItemsIntoTransactionDetail(transactionId, userID, itemQuantity);
+		                }
+		  
+		
+		            
+		            
+		            
+		            
+		            dbcon.clearCart(userID);
+
+		            cartItems.clear();
+		            cartListView.getItems().clear();
+		            updateSubtotalLabel();
+		            checkEmptyCart();
+		            
+		        } else {
+		            Alert alert = new Alert(Alert.AlertType.ERROR);
+		            alert.setTitle("Error");
+		            alert.setHeaderText(null);
+		            alert.setContentText("Failed to Make Transaction");
+		            alert.showAndWait();
+		        }
+		    });
 		});
+
+	
 		homeMenu.setOnAction(event -> new HomePageCus(primaryStage, username));
 		logoutMenuItem.setOnAction(event -> new login(primaryStage));
 		purchaseHistoryMenuItem.setOnAction(event -> new purchasehistory(primaryStage, cartItems, cartListView, username, transactions));
@@ -412,7 +459,19 @@ public class mycart {
 	}
 
 	private String generateTransactionId(int index) {
-		return "TR" + String.format("%03d", index);
+	    String transactionId = "TR" + String.format("%03d", index);
+
+	    
+	    while (isTransactionIdExists(transactionId)) {
+	        index++;
+	        transactionId = "TR" + String.format("%03d", index);
+	    }
+
+	    return transactionId;
+	}
+
+	private boolean isTransactionIdExists(String transactionId) {
+		 return dbcon.isTransactionIdExists(transactionId);
 	}
 
 	public Scene getScene() {
