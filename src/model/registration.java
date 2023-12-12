@@ -159,11 +159,7 @@ public class registration implements EventHandler<ActionEvent> {
 			gender.set("Female");
 		});
 		
-//		if(event.getSource() == maleRadioButton) {
-//			gender = "Male";
-//		}else if(event.getSource() == femaleRadioButton){
-//			gender = "Female";
-//		}
+
 		
 		registerButton.setOnAction(e -> {
 		    String username = usernameField.getText();
@@ -180,7 +176,7 @@ public class registration implements EventHandler<ActionEvent> {
 		    if (isValid) {
 		        showSuccess("Registered Successfully");
 
-		        // Ensure none of the variables is null before making the database call
+		
 		        if (userid!= null && username != null && password != null && address != null && phoneNumber != null && selectedGender != null) {
 		           dbcon.executeUpdate(userid, username, role, password, address, phoneNumber, selectedGender, "registration");
 		        } else {
@@ -195,6 +191,7 @@ public class registration implements EventHandler<ActionEvent> {
 		check.setOnAction(this);
 
 	}
+	
 	public void showErrorAlert(String header, String content) {
 		Alert alert = new Alert(Alert.AlertType.ERROR);
 		alert.setTitle("Error");
@@ -206,11 +203,10 @@ public class registration implements EventHandler<ActionEvent> {
 		alert.showAndWait();
 	}
 
-	
 	private String generateNextUserID() {
         String lastUserID = dbcon.getLastRegisteredUserID();
 
-        String numericPart = lastUserID.substring(2); // Extract the numeric part
+        String numericPart = lastUserID.substring(2); 
         int nextNumber = Integer.parseInt(numericPart) + 1;
         
         String nextUserID = String.format("CU%03d", nextNumber);
@@ -231,7 +227,7 @@ public class registration implements EventHandler<ActionEvent> {
 		}
 
 		if (username.length() < 5 || username.length() > 20) {
-			return false; // Adjust this condition to check for uniqueness (not handled in this method)
+			return false; 
 		}
 
 		if (!password.matches("[a-zA-Z0-9]+") || password.length() < 5) {
@@ -248,7 +244,6 @@ public class registration implements EventHandler<ActionEvent> {
 
 		return true;
 	}
-
 	
 	@Override
 	public void handle(ActionEvent event) {
@@ -266,11 +261,10 @@ public class registration implements EventHandler<ActionEvent> {
 		}
 		
 		if(event.getSource() == registerButton) {
-			//input data ke database
+		
 			dbcon.executeUpdate(username, password, address, phoneNum, gender, "registration", userID, role);
 		}
-			//else if(event.getSource() == check) {
-//			buat ambil data dari database
+			
 			ResultSet rs = dbcon.executeQuery(username);
 			
 			try {
