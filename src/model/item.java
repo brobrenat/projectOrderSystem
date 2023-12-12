@@ -3,6 +3,7 @@ package model;
 public class item {
 	private String objectname;
 	private Double objectprice;
+	
 	public item(String objectname, Double objectprice) {
 		super();
 		this.objectname = objectname;
