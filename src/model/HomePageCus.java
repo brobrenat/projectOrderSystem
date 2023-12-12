@@ -99,7 +99,7 @@ public class HomePageCus {
 
 	private void loadListData() {
 	    if (dbcon != null) {
-	        
+	    
 	        ArrayList<item> itemsFromDatabase = dbcon.getAllItems();
 
 	        itemsList.clear(); 
@@ -174,17 +174,13 @@ public class HomePageCus {
 	        primaryStage.setScene(purchaseHistoryPage.getScene());
 	    });
 		
-
 		homeMenu.setOnAction(event -> {
-
             new HomePageCus(primaryStage, username);
         });
 		logoutMenuItem.setOnAction(event -> new login(primaryStage));
-		
 		addtocart.setOnAction(event ->  addToCart());
 
 	}
-	
 	
 	private void addToCart() {
 	    String selectedItem = listView.getSelectionModel().getSelectedItem();
@@ -193,7 +189,6 @@ public class HomePageCus {
 	    String userID = dbcon.getUserIDByUsername(currentuser);
 
 	    if (selectedItem != null && selectedQuantity > 0) {
-	     
 	        boolean found = false;
 	        for (cart item : cartItems) {
 	            if (item.getObjectname().equals(selectedItem)) {
@@ -205,7 +200,6 @@ public class HomePageCus {
 	        }
 
 	        if (!found) {
-	         
 	            double price = getItemPrice(itemsList, selectedItem);
 	            cart cartItem = new cart(selectedItem, price, selectedQuantity, "Description");
 	            cartItems.add(cartItem);
@@ -213,7 +207,6 @@ public class HomePageCus {
 	            String productID = dbcon.getProductIDByName(selectedItem);
 	            
 	            dbcon.addToTableCart(productID, userID, selectedQuantity);
-				
 				Alert alert = new Alert(Alert.AlertType.INFORMATION);
 				alert.setTitle("Message");
 				alert.setHeaderText(null);
