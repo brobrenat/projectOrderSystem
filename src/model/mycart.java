@@ -138,7 +138,7 @@ public class mycart {
 		            phonenum.setText("Phone Number: " + phoneNumber);
 		            address.setText("Address: " + userAddress);
 		        } else {
-		            // Handle the case where user information is not found
+	
 		            phonenum.setText("Phone Number: N/A");
 		            address.setText("Address: N/A");
 		        }
@@ -251,16 +251,16 @@ public class mycart {
 
 		updatecart.setOnAction(event -> {
 		    String selectedItem = extractProductName(cartListView.getSelectionModel().getSelectedItem());
-		    int cartQuantity = getCartQuantity(selectedItem); // Get the cart quantity of the selected item
+		    int cartQuantity = getCartQuantity(selectedItem); 
 		    
 		    String productID = dbcon.getProductIDByName(selectedItem);
-		    int newQuantity = cartQuantity + quantity.getValue(); // Get the value from the spinner
+		    int newQuantity = cartQuantity + quantity.getValue(); 
 		    
 		    if (newQuantity >= 0) {
 		        updateCartQuantity(selectedItem, newQuantity);
 		        updateListView(selectedItem, newQuantity);
 
-		        // Update the database with the quantity shown in the ListView
+		     
 		        dbcon.updateCartQuantityInDatabase(productID, userID, newQuantity);
 
 		        updateSubtotalLabel();
@@ -330,21 +330,21 @@ public class mycart {
 		                dbcon.insertTransactionDetail(transactionId, productID, cartQuantity);
 		            }
 
-		            // Clear cart and update UI after successful purchase
+		         
 		            dbcon.clearCart(userID);
 		            cartItems.clear();
 		            cartListView.getItems().clear();
 		            updateSubtotalLabel();
 		            checkEmptyCart();
 
-		            // Show a success message
+
 		            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
 		            successAlert.setTitle("Success");
 		            successAlert.setHeaderText(null);
 		            successAlert.setContentText("Successfully Purchased");
 		            successAlert.showAndWait();
 		        } else {
-		            // Show a message if the user cancels the purchase
+		         
 		            Alert cancelAlert = new Alert(Alert.AlertType.ERROR);
 		            cancelAlert.setTitle("Error");
 		            cancelAlert.setHeaderText(null);
