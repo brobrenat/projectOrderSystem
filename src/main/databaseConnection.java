@@ -7,10 +7,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-import model.cart;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.ListView;
+
 import model.item;
 
 public class databaseConnection {
@@ -21,8 +23,7 @@ public class databaseConnection {
 	private final String HOST ="localhost:3306";
 	
 	private final String CONNECT = String.format("jdbc:mysql://%s/%s", HOST, DATABASE);
-	private Main mainInstance;
-
+	
 	private Connection con;
 	private Statement st;
 	private static databaseConnection DatabaseConnection;
@@ -135,17 +136,17 @@ public class databaseConnection {
 	                ResultSet resultSet = statement.executeQuery("SELECT product_des FROM product WHERE product_name = '" + product_name + "'");
 	            ) {
 	                if (resultSet.next()) {
-	                    // Assuming 'product_description' is the column name in your 'product' table
+	                   
 	                    description = resultSet.getString("product_des");
 	                }
 	            }
 	        } else {
-	            // Handle the case where the connection is not initialized or closed
+	           
 	            System.err.println("Database connection is not initialized or closed.");
 	        }
 	    } catch (SQLException e) {
 	        e.printStackTrace();
-	        // Handle the exception according to your needs
+	      
 	    }
 
 	    return description;
@@ -156,7 +157,7 @@ public class databaseConnection {
 	    try {
 	        System.out.println(query);
 
-	        // Use a prepared statement
+	      
 	        try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
 	            preparedStatement.setString(1, productID);
 	        	preparedStatement.setString(2, product_name);
@@ -223,14 +224,14 @@ public class databaseConnection {
 	    String query = "SELECT userID FROM user WHERE username = ?";
 
 	    try {
-	        // Use a prepared statement to avoid SQL injection
+	        
 	        try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
 	            preparedStatement.setString(1, username);
 
-	            // Execute the query
+	           
 	            ResultSet resultSet = preparedStatement.executeQuery();
 
-	            // Check if the result set has a row
+	            
 	            if (resultSet.next()) {
 	                userID = resultSet.getString("userID");
 	            }
@@ -247,17 +248,17 @@ public class databaseConnection {
 		String query = "SELECT COUNT(*) AS count FROM product WHERE productID = ?";
 
 	    try {
-	        // Use a prepared statement to avoid SQL injection
+	        
 	        try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
 	            preparedStatement.setString(1, nextprodID);
 
-	            // Execute the query
+	          
 	            ResultSet resultSet = preparedStatement.executeQuery();
 
-	            // Check the count of rows with the given productID
+	          
 	            if (resultSet.next()) {
 	                int count = resultSet.getInt("count");
-	                return count > 0;  // If count > 0, the productID exists
+	                return count > 0;  
 	            }
 	        }
 	    } catch (SQLException e) {
@@ -271,15 +272,15 @@ public class databaseConnection {
 	    String query = "UPDATE product SET product_price = ? WHERE product_name = ?";
 
 	    try {
-	        // Use a prepared statement to avoid SQL injection
+	        
 	        try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
 	            preparedStatement.setDouble(1, newPrice);
 	            preparedStatement.setString(2, productName);
 
-	            // Execute the update
+	         
 	            int rowsAffected = preparedStatement.executeUpdate();
 
-	            // Check if the update was successful
+	           
 	            if (rowsAffected > 0) {
 	                System.out.println("Price updated successfully.");
 	            } else {
@@ -296,14 +297,14 @@ public class databaseConnection {
 	    String query = "SELECT productID FROM product WHERE product_name = ?";
 
 	    try {
-	        // Use a prepared statement to avoid SQL injection
+	       
 	        try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
 	            preparedStatement.setString(1, selectedItem);
 
-	            // Execute the query
+	           
 	            ResultSet resultSet = preparedStatement.executeQuery();
 
-	            // Check if the result set has a row
+	            
 	            if (resultSet.next()) {
 	                productID = resultSet.getString("productID");
 	            }
@@ -319,16 +320,16 @@ public class databaseConnection {
 	    String query = "INSERT INTO cart (productID, userID, quantity) VALUES (?, ?, ?)";
 	    
 	    try {
-	        // Use a prepared statement
+	        
 	        try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
 	            preparedStatement.setString(1, productID);
 	            preparedStatement.setString(2, userID);
 	            preparedStatement.setInt(3, quantity);
 
-	            // Execute the update
+	            
 	            int rowsAffected = preparedStatement.executeUpdate();
 
-	            // Check if the insertion was successful
+	            
 	            if (rowsAffected > 0) {
 	                System.out.println("Item added to cart successfully.");
 	            } else {
@@ -362,15 +363,15 @@ public class databaseConnection {
 	    String query = "DELETE FROM cart WHERE productID = ? AND userID = ?";
 	    
 	    try {
-	        // Use a prepared statement to avoid SQL injection
+	        
 	        try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
 	            preparedStatement.setString(1, productID);
 	            preparedStatement.setString(2, userID);
 	            
-	            // Execute the update
+	           
 	            int rowsAffected = preparedStatement.executeUpdate();
 	            
-	            // Check if the deletion was successful
+	            
 	            return rowsAffected > 0;
 	        }
 	    } catch (SQLException e) {
@@ -420,14 +421,14 @@ public class databaseConnection {
 	    String query = "DELETE FROM cart WHERE userID = ?";
 
 	    try {
-	        // Use a prepared statement to avoid SQL injection
+	        
 	        try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
 	            preparedStatement.setString(1, userID);
 
-	            // Execute the update
+	            
 	            int rowsAffected = preparedStatement.executeUpdate();
 
-	            // Check if the deletion was successful
+	           
 	            return rowsAffected > 0;
 	        }
 	    } catch (SQLException e) {
@@ -439,9 +440,9 @@ public class databaseConnection {
 
 	public boolean insertTransactionDetail(String transactionId, String productId, int quantity) {
 	    try {
-	        // Check if the transactionID exists in the transaction_header table
+	       
 	        if (isTransactionIdExists(transactionId) && isProductIDExists(productId)) {
-	            // Insert the transaction detail into transaction_detail table
+	           
 	            String query = "INSERT INTO transaction_detail (transactionId, productId, quantity) VALUES (?, ?, ?)";
 	            try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
 	                preparedStatement.setString(1, transactionId);
@@ -449,10 +450,10 @@ public class databaseConnection {
 	                preparedStatement.setInt(3, quantity);
 
 	                int rowsAffected = preparedStatement.executeUpdate();
-	                return rowsAffected > 0; // Return true if insertion was successful
+	                return rowsAffected > 0;
 	            }
 	        } else {
-	            // Handle the case where either transactionId or productId doesn't exist
+	            
 	            System.out.println("TransactionID or ProductID does not exist.");
 	            return false;
 	        }
@@ -529,8 +530,6 @@ public class databaseConnection {
 	    return userDetails;
 	}
 	
-
-
 	public int getProductQuantitiesInCart(String productID , String userID, String action) {
 	    int productQuantity = 0;
 	    String query = "";
@@ -550,6 +549,67 @@ public class databaseConnection {
 	    }
 
 	    return productQuantity;
+	}
+
+	public ArrayList<String> getAllTransactionIDsForUser(String userID) {
+        ArrayList<String> transactionIDs = new ArrayList<>();
+        String query = String.format("SELECT transactionID FROM transaction_header WHERE userID = \"%s\"", userID);
+
+        try {
+            ResultSet rs = st.executeQuery(query);
+
+            while (rs.next()) {
+                String transactionID = rs.getString("transactionID");
+                System.out.println(transactionID);
+                transactionIDs.add(transactionID);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return transactionIDs;
+    }
+	
+	public double viewTransactionDetails(String transactionID, ListView<String> cartListView) {
+        double totalPrice = 0.0;
+
+	    try {
+	    	
+	    	
+	    		String query = "SELECT product.product_name, transaction_detail.quantity, product.product_price " +
+	                       "FROM transaction_detail " +
+	                       "INNER JOIN product ON transaction_detail.productId = product.productID " +
+	                       "WHERE transaction_detail.transactionId = ?";
+	    	
+	    		
+	    		
+	        try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
+	            preparedStatement.setString(1, transactionID);
+
+	            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+	                ObservableList<String> transactionDetails = FXCollections.observableArrayList();
+	               
+
+	                while (resultSet.next()) {
+	                    String productName = resultSet.getString("product_name");
+	                    int quantity = resultSet.getInt("quantity");
+	                    double productPrice = resultSet.getDouble("product_price");
+
+	                    double totalProductPrice = quantity * productPrice;
+	                    totalPrice += totalProductPrice;
+
+	                    transactionDetails.add(String.format("%-20s %-10d %-10.2f", productName, quantity, totalProductPrice));
+
+	                }
+
+	                
+	                cartListView.setItems(transactionDetails);
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return totalPrice;
 	}
 
 	   
