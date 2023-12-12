@@ -84,9 +84,9 @@ public class HomePageAdmin {
 	    
 
 
-//	    homeMenu.setOnAction(event -> new HomePageAdmin(primaryStage, username));
+
 	    homeMenu.setOnAction(event -> {
-            // No need to create a new instance, just switch the scene
+            
             new HomePageAdmin(primaryStage, username);
         });
 	    
@@ -131,10 +131,10 @@ labeltitle.setFont(Font.font("Arial", FontWeight.BOLD, 42));
 
 	    public void loadListData() {
 		    if (dbcon != null) {
-		        // Assuming you have a method in your databaseConnection class to retrieve item data
+		        
 		        ArrayList<item> itemsFromDatabase = dbcon.getAllItems();
 
-		        itemsList.clear(); // Clear the existing list before adding items from the database
+		        itemsList.clear();
 		        itemsList.addAll(itemsFromDatabase);
 
 		        ObservableList<String> items = FXCollections.observableArrayList();
