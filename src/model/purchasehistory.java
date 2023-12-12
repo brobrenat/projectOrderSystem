@@ -14,6 +14,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import main.Main;
+import main.databaseConnection;
 
 public class purchasehistory {
 
@@ -37,7 +38,7 @@ public class purchasehistory {
 	Label transactionid = new Label("Transaction ID : ");
 	Label name = new Label();
 	Label phonenumb = new Label("Phone Number : ");
-	Label addr = new Label("Adress : ");
+	Label addr = new Label("Address : ");
 	Label totalprice = new Label();
 
 	ArrayList<cart> cartItems = new ArrayList<>();
@@ -49,26 +50,49 @@ public class purchasehistory {
 	Label subtotal, orderinfo, phonenum, address;
 	private String username;
 	ArrayList<transaction> transactions = new ArrayList<>();
+	
+	databaseConnection dbcon;
 
 	public purchasehistory(Stage primaryStage, ArrayList<cart> cartItems, ListView<String> cartListView,
-			String username, ArrayList<transaction> transactions) {
+		String username, ArrayList<transaction> transactions) {
 		this.primaryStage = primaryStage;
 		this.cartItems = cartItems;
 		this.username = username;
+		this.dbcon = databaseConnection.getConnection();
 		this.transactions = transactions;
 		labeltitle.setText(username + "'s" + " Purchase History");
 		name.setText("Username : " + username);
 		System.out.println("Number of items in cartItems: " + cartItems.size());
+		loadtranstlist(username);
 		initialize();
-		loadtranstlist();
+		retrieveUserInfo(username);
 		setbuttonevent();
 		primaryStage.setScene(purchasehistory);
 		primaryStage.setTitle("Home");
 		primaryStage.show();
 
 	}
+	
+	public void retrieveUserInfo(String username) {
+	    try {
+	        String phoneNumber = dbcon.getUserDetails(username, "phoneNum"); 
+	        String userAddress = dbcon.getUserDetails(username, "address");
+
+	        if (phoneNumber != null && userAddress != null) {
+	            phonenumb.setText("Phone Number: " + phoneNumber);
+	            addr.setText("Address: " + userAddress);
+	        } else {
+	  
+	            phonenumb.setText("Phone Number: N/A");
+	            addr.setText("Address: N/A");
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
 
 	private void initialize() {
+		
 		checkEmptyCart();
 		itemDescriptionBox.setVisible(false);
 		labeltitle.setPadding(new Insets(10));
@@ -78,6 +102,7 @@ public class purchasehistory {
 		cartListView.setMaxWidth(400);
 		transactlist.setMaxHeight(500);
 		transactlist.setMaxWidth(300);
+		labelname.setFont(Font.font("Arial", FontWeight.BOLD, 18));
 		HBox.setHgrow(cartListView, Priority.ALWAYS);
 		homeMenu.getItems().add(homePageMenuItem);
 		cartMenu.getItems().add(myCartMenuItem);
@@ -101,6 +126,8 @@ public class purchasehistory {
 		updateSubtotalLabel();
 
 	}
+	
+	
 
 	public void updateTransactions(transaction newTransaction, ListView<String> transactlist) {
 		transactions.add(newTransaction);
@@ -116,24 +143,21 @@ public class purchasehistory {
 	}
 
 	private void checkEmptyCart() {
-		if (transactlist.getItems().isEmpty()) {
-			labelname.setText("There's No History");
-			labeldesc.setText("Consider Purchasing Our Products");
-
-		} else {
-			labelname.setText("Select a Transaction to view Details");
-			updateTransactionListView(transactlist);
-
-		}
-
+		
+	    if (transactlist.getItems().isEmpty()) {
+	        labelname.setText("There's No History");
+	        labeldesc.setText("Consider Purchasing Our Products");
+	        itemDescriptionBox.setVisible(false);  
+	    } else {
+	        labelname.setText("Select a Transaction to view Details");
+	        labeldesc.setVisible(false);
+	    }
 	}
 
-	private void loadtranstlist() {
-		ObservableList<String> transactionnames = FXCollections.observableArrayList();
-		for (transaction transact : transactions) {
-			transactionnames.add(transact.getTransactionId());
-		}
-		transactlist.getItems().addAll(transactionnames);
+	private void loadtranstlist(String username) {
+	    String userID = dbcon.getUserIDByUsername(username);
+	    ArrayList<String> transactionIDs = dbcon.getAllTransactionIDsForUser(userID);
+	    transactlist.getItems().addAll(transactionIDs);
 	}
 
 	private void updateSubtotalLabel() {
@@ -143,16 +167,8 @@ public class purchasehistory {
 		}
 	}
 
-	private void loadtransdetail() {
-	    ObservableList<String> transactionnames = FXCollections.observableArrayList();
-	    for (transaction transact : transactions) {
-	        for (cart cartItem : transact.getCartItems()) {
-	            transactionnames.add(cartItem.toString());
-	           
-	        }
-	    }
-	    cartListView.getItems().addAll(transactionnames);
-	}
+	
+
 
 	private double getItemPrice(ArrayList<item> items, String itemname) {
 
@@ -172,24 +188,29 @@ public class purchasehistory {
 		}
 		return "";
 	}
+	
+
 
 
 	private void setbuttonevent() {
-		transactlist.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+		String userID = dbcon.getUserIDByUsername(username);
+
+		transactlist.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> { 
+			String transactionID = newValue;
 			itemDescriptionBox.setVisible(true);
 			if (newValue != null) {
-				String productName = extractProductName(newValue);
 				if (!hbox.getChildren().contains(itemDescriptionBox)) {
-					hbox.getChildren().remove(intro);
-					hbox.getChildren().addAll(itemDescriptionBox);
-					loadtransdetail();
-
-				}
-
+	                hbox.getChildren().remove(intro);
+	                cartListView.getItems().clear();
+	                hbox.getChildren().addAll(itemDescriptionBox);
+	            }
+				transactionid.setText("TransactionID : " + newValue);
+				dbcon.viewTransactionDetails(transactionID, cartListView);
 				String selectedItem = extractProductName(newValue);
 				double price = getItemPrice(itemsList, selectedItem);
-				double totalPrice = price * quantity.getValue();
-
+				double totalPrice = dbcon.viewTransactionDetails(transactionID, cartListView);
+				System.out.println(totalPrice);
+				
 				totalprice.setText("Total : Rp. " + String.format("%.2f", totalPrice));
 			} else {
 				hbox.getChildren().remove(itemDescriptionBox);
@@ -198,7 +219,7 @@ public class purchasehistory {
 		});
 
 		homeMenu.setOnAction(event -> new HomePageCus(primaryStage, username));
-		logoutMenuItem.setOnAction(event -> new login(primaryStage, mainInstance));
+		logoutMenuItem.setOnAction(event -> new login(primaryStage));
 		myCartMenuItem.setOnAction(event -> new mycart(primaryStage, cartItems, transactlist, username));
 
 	}
@@ -211,6 +232,10 @@ public class purchasehistory {
 		}
 		return totalPrice;
 
+	}
+
+	public Scene getScene() {
+		return purchasehistory;
 	}
 
 }
