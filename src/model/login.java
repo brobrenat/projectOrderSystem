@@ -58,11 +58,11 @@ public class login {
             if (username.isEmpty() || password.isEmpty()) {
                 showErrorAlert("Failed to Login", "All fields must be filled");
             } else {
-                // Check credentials against database
+               
                 if (dbcon.authenticateUser(username, password) != null) {
                 	System.out.println(dbcon.getUserRole(username));
                     showSuccess("Login successful");
-                    // Redirect to the appropriate home page based on the user's role
+                    
                     if (dbcon.getUserRole(username).equals("Admin")) {
                     	
                         new HomePageAdmin(primaryStage, username);
