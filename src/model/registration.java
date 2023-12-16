@@ -51,7 +51,7 @@ public class registration implements EventHandler<ActionEvent> {
 	HBox gendertoggle = new HBox(5);
 	HBox HaveAccountBox = new HBox(5);
 	databaseConnection dbcon= new databaseConnection();
-	Button check = new Button("Check");
+	
 	private AtomicReference<String> gender = new AtomicReference<>("");
 
 
@@ -89,7 +89,7 @@ public class registration implements EventHandler<ActionEvent> {
 		registerButton.setMaxWidth(175);
 		registerButton.setOnAction(this);
 		
-		check.setOnAction(this);
+		
 
 		gendertoggle.getChildren().addAll(maleRadioButton, femaleRadioButton);
 		gendertoggle.setAlignment(Pos.CENTER_LEFT);
@@ -124,7 +124,7 @@ public class registration implements EventHandler<ActionEvent> {
 		gridPane.add(termsCheckBox, 1, 8);
 		gridPane.add(HaveAccountBox, 1, 9);
 		gridPane.add(registerButton, 1, 10);
-		gridPane.add(check, 2, 10);
+		
 
 		gridPane.setAlignment(Pos.CENTER);
 
@@ -188,7 +188,6 @@ public class registration implements EventHandler<ActionEvent> {
 		});
 
 		
-		check.setOnAction(this);
 
 	}
 	
