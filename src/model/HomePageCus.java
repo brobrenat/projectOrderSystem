@@ -214,6 +214,7 @@ public class HomePageCus {
 				alert.showAndWait();
 	        }
 	    }
+	    mycart.updateGlobalCart(cartItems);
 	}
 
 
