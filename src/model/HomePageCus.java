@@ -59,7 +59,7 @@ public class HomePageCus {
 		this.primaryStage = primaryStage;
 		this.dbcon = databaseConnection.getConnection();
         this.username = username;
-        
+        this.cartItems = cartmanager.getInstance().getCartItems();
        
         
 		labelname.setText("Welcome, "+ username);
@@ -214,7 +214,7 @@ public class HomePageCus {
 				alert.showAndWait();
 	        }
 	    }
-	    mycart.updateGlobalCart(cartItems);
+        cartmanager.getInstance().setCartItems(cartItems); 
 	}
 
 
