@@ -87,7 +87,27 @@ public class databaseConnection {
 
 	        return lastprodID;
 	}
-	
+	public boolean clearCartTable() {
+    String query = "DELETE FROM cart";
+
+    try {
+        try (PreparedStatement preparedStatement = con.prepareStatement(query)) {
+            int rowsAffected = preparedStatement.executeUpdate();
+
+            // Check if any rows were affected
+            if (rowsAffected > 0) {
+                System.out.println("Cart table cleared successfully.");
+                return true;
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    System.out.println("Failed to clear cart table.");
+    return false;
+}
+
 	public boolean deleteProduct(String productName) {
 	    String query = "DELETE FROM product WHERE product_name = ?";
 	    
