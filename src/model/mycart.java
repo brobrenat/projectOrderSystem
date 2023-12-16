@@ -14,6 +14,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import main.Main;
 import main.databaseConnection;
@@ -38,7 +39,7 @@ public class mycart {
 	ArrayList<item> itemsList = new ArrayList<>();
 	Spinner<Integer> quantity = new Spinner<>(-100, 100, 1);
 	Label itemDescriptionTitle = new Label();
-	Label itemDescriptionLabel = new Label();
+	Text itemDescriptionLabel = new Text();
 	Label eachprice = new Label();
 	Label quantlabel = new Label("Quantity : ");
 	Label totalprice = new Label();
@@ -205,6 +206,7 @@ public class mycart {
 	}
 
 	private void setbuttonevent() {
+		itemDescriptionLabel.setWrappingWidth(300);
 		String currentuser = username; 
 	    String userID = dbcon.getUserIDByUsername(currentuser);
 		
@@ -221,9 +223,10 @@ public class mycart {
 					quantspin.getChildren().addAll(quantlabel, quantity, totalprice);
 
 				}
+				String productDes = dbcon.getProductDescription(productName);
 				eachprice.setText(String.valueOf(getItemPrice(itemsList, productName)));
 				itemDescriptionTitle.setText(productName);
-				itemDescriptionLabel.setText("Description for " + productName);
+				itemDescriptionLabel.setText(productDes);
 				itemDescriptionBox.setVisible(true);
 				String selectedItem = extractProductName(newValue);
 				double price = getItemPrice(itemsList, selectedItem);
