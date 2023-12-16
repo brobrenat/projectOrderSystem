@@ -58,12 +58,12 @@ public class mycart {
 	ArrayList<transaction> transactions = new ArrayList<>();
 	ArrayList<user> userList = new ArrayList<>();
 	databaseConnection dbcon = new databaseConnection();
+	 private static ArrayList<cart> globalCartItems = new ArrayList<>();
 
 	public mycart(Stage primaryStage, ArrayList<cart> cartItems, ListView<String> cartListView, String username) {
 	    this.primaryStage = primaryStage;
 	    this.dbcon = databaseConnection.getConnection();
-	    
-	    this.cartItems = cartItems;
+	    this.cartItems = new ArrayList<>(globalCartItems);
 	    this.username = username;
 		labeltitle.setText(username+"'s"+" Cart");
 		initialize();
@@ -128,6 +128,10 @@ public class mycart {
 		 cartListView.getItems().clear();
 		
 	}
+	 public static void updateGlobalCart(ArrayList<cart> updatedCartItems) {
+	        globalCartItems.clear();
+	        globalCartItems.addAll(updatedCartItems);
+	    }
 
 	 public void retrieveUserInfo(String username) {
 		    try {
@@ -166,7 +170,7 @@ public class mycart {
 			labeldesc.setText("Considering adding one!");
 
 		} else {
-			labelname.setText("Welcome User's");
+			labelname.setText("Welcome " + username);
 			labeldesc.setText("Choose item to add or delete");
 			loadListView();
 
@@ -207,8 +211,6 @@ public class mycart {
 	private void setbuttonevent() {
 		String currentuser = username; 
 	    String userID = dbcon.getUserIDByUsername(currentuser);
-	   
-
 		
 		cartListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
 			itemDescriptionBox.setVisible(true);
