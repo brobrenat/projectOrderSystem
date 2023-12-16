@@ -56,14 +56,13 @@ public class mycart {
 	Label subtotal, orderinfo, phonenum, address;
 	private String username;
 	ArrayList<transaction> transactions = new ArrayList<>();
-	ArrayList<user> userList = new ArrayList<>();
+	
 	databaseConnection dbcon = new databaseConnection();
-	 private static ArrayList<cart> globalCartItems = new ArrayList<>();
 
 	public mycart(Stage primaryStage, ArrayList<cart> cartItems, ListView<String> cartListView, String username) {
 	    this.primaryStage = primaryStage;
 	    this.dbcon = databaseConnection.getConnection();
-	    this.cartItems = new ArrayList<>(globalCartItems);
+        this.cartItems = cartmanager.getInstance().getCartItems();
 	    this.username = username;
 		labeltitle.setText(username+"'s"+" Cart");
 		initialize();
@@ -79,7 +78,6 @@ public class mycart {
 
 		checkEmptyCart();
 		System.out.println("dbcon: " + dbcon);
-		System.out.println(userList.size());
 		labeltitle.setPadding(new Insets(10));
 		labeltitle.setFont(Font.font("Arial", FontWeight.BOLD, 42));
 		labelname.setFont(Font.font("Arial", FontWeight.BOLD, 21));
@@ -128,10 +126,7 @@ public class mycart {
 		 cartListView.getItems().clear();
 		
 	}
-	 public static void updateGlobalCart(ArrayList<cart> updatedCartItems) {
-	        globalCartItems.clear();
-	        globalCartItems.addAll(updatedCartItems);
-	    }
+
 
 	 public void retrieveUserInfo(String username) {
 		    try {
@@ -160,8 +155,9 @@ public class mycart {
 		        int cartQuantity = cartItem.getObjectquantity();
 		        dbcon.insertTransactionDetail(newTransaction.getTransactionId(), productID, cartQuantity);
 		    }
-
-		    transactions.add(newTransaction);
+		    cartmanager.getInstance().setCartItems(cartItems);
+	        transactions.add(newTransaction);
+		   
 		}
 
 	private void checkEmptyCart() {
